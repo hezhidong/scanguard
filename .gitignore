@@ -1,0 +1,15 @@
+# state / secrets
+config.yaml
+*.db
+geo-cache.json
+banned.json
+stats.jsonl
+notify.txt
+reports/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+__pycache__/
+*.pyc

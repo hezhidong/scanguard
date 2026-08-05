@@ -1,0 +1,93 @@
+# ScanGuard Agent example configuration
+# Copy to /etc/scanguard/config.yaml and edit.
+
+state_dir: /var/lib/scanguard
+
+# Notification file (one line per new block). An external cron can read
+# `scanguard --notify` to push these to chat and truncate the file.
+notify_file: /var/lib/scanguard/notify.txt
+
+dry_run: false          # set true to detect without blocking
+
+whitelist:
+  - 127.0.0.1
+  - ::1
+  # - YOUR_OPS_IP
+
+geo:
+  provider: ip-api      # ip-api | none
+  cache_ttl_days: 7
+
+# ── Log sources ──────────────────────────────────────────────────────
+log_sources:
+  # Local nginx
+  - name: local-nginx
+    kind: nginx
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/access.log.1
+
+  # Remote server over SSH
+  - name: web-remote
+    kind: nginx
+    host: 203.0.113.10
+    user: root
+    port: 22
+    key: ~/.ssh/id_ed25519
+    sudo: false
+    timezone: Asia/Shanghai
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/access.log.1
+
+  # SSH brute-force from auth.log
+  - name: local-auth
+    kind: auth
+    paths:
+      - /var/log/auth.log
+
+# ── Detection rules ──────────────────────────────────────────────────
+rules:
+  - name: php-scanner
+    pattern: '\.(php|asp|aspx|env|git|jsp|cgi)(\?|$| )'
+    threshold: 20
+    window_minutes: 30
+    severity: high
+
+  - name: path-traversal
+    pattern: '(\.\./|/etc/passwd|phpMyAdmin|xmlrpc\.php|/\.aws/credentials)'
+    threshold: 5
+    window_minutes: 30
+    severity: critical
+
+  - name: xss-probe
+    pattern: '(<script|bxss\.me|union\s+select|onerror=)'
+    threshold: 10
+    window_minutes: 30
+    severity: high
+
+  - name: ssh-bruteforce
+    pattern: 'Failed password|Invalid user|authentication failure'
+    threshold: 5
+    window_minutes: 10
+    severity: high
+
+# ── Firewall action ──────────────────────────────────────────────────
+firewall:
+  backend: iptables       # iptables | nftables | ufw | firewalld
+  policy: drop            # drop | reject
+  chain: INPUT
+  persistent: true
+  # To block on a *remote* host instead of locally, set host/user/key below:
+  # host: 203.0.113.10
+  # user: root
+  # key: ~/.ssh/id_ed25519
+  # sudo: true
+
+# ── Central Threat Intel API (optional) ──────────────────────────────
+central:
+  enabled: false
+  url: https://threat.example.com
+  node_id: node-nyc-01
+  node_name: NYC Web 01
+  token: ""                # bearer token

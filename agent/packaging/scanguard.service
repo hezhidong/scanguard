@@ -1,0 +1,10 @@
+[Unit]
+Description=ScanGuard Agent scan
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -m scanguard -c /etc/scanguard/config.yaml --print
+# No hardening needed beyond standard; runs as root to manipulate firewall.
+Nice=10

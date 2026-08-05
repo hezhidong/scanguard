@@ -1,0 +1,15 @@
+[Unit]
+Description=ScanGuard Central Threat Intel API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/scanguard-api
+Environment=SCANGUARD_DB=/var/lib/scanguard-api/threats.db
+Environment=SCANGUARD_API_TOKEN=changeme
+ExecStart=/usr/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080
+Restart=on-failure
+User=scanguard
+
+[Install]
+WantedBy=multi-user.target

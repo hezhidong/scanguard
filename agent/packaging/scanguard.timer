@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ScanGuard Agent scan every 30 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=scanguard.service
+
+[Install]
+WantedBy=timers.target

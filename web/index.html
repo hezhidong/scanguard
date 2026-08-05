@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ScanGuard — Threat Intel</title>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --border:#30363d; --text:#e6edf3;
+          --muted:#8b949e; --red:#f85149; --orange:#d29922; --blue:#58a6ff; --green:#3fb950; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--text); }
+  header { padding:24px 32px; border-bottom:1px solid var(--border); display:flex;
+           align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  header h1 { margin:0; font-size:22px; }
+  header .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 32px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:28px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .stat .n { font-size:30px; font-weight:700; }
+  .stat .l { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  input, select, button { background:var(--card); color:var(--text); border:1px solid var(--border);
+          border-radius:8px; padding:8px 12px; font-size:14px; }
+  button { cursor:pointer; background:var(--blue); color:#fff; border:none; }
+  button.ghost { background:var(--card); border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; background:var(--card);
+          border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  th,td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+  th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#1c2330; }
+  .ip { font-family:ui-monospace,monospace; color:var(--blue); cursor:pointer; }
+  .sev { padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+  .sev-low { background:#1f2d1f; color:var(--green); }
+  .sev-medium { background:#2d2817; color:var(--orange); }
+  .sev-high { background:#2d1d1d; color:var(--red); }
+  .sev-critical { background:#3d1114; color:#fff; }
+  .muted { color:var(--muted); }
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:50;
+              align-items:center; justify-content:center; padding:20px; }
+  .modal-bg.show { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:12px;
+           max-width:760px; width:100%; max-height:85vh; overflow:auto; padding:24px; }
+  .modal h2 { margin-top:0; font-family:ui-monospace,monospace; }
+  .ev { border-left:2px solid var(--border); padding:6px 12px; margin:8px 0; font-size:13px; }
+  .tag { display:inline-block; background:#21262d; border:1px solid var(--border);
+         border-radius:6px; padding:1px 7px; margin:2px; font-size:11px; }
+  a { color:var(--blue); }
+  footer { color:var(--muted); font-size:12px; text-align:center; padding:24px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🛡️ ScanGuard Threat Intel</h1>
+    <div class="sub">Community-driven scanner &amp; brute-force blocklist</div>
+  </div>
+  <div class="toolbar">
+    <a class="ghost" href="/blocklist.txt?min_severity=high" target="_blank"><button class="ghost">blocklist.txt</button></a>
+    <a href="/blocklist.iptables?min_severity=high" target="_blank"><button class="ghost">iptables</button></a>
+    <a href="/blocklist.nftables?min_severity=high" target="_blank"><button class="ghost">nftables</button></a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <input id="q" placeholder="Search IP / ISP / org…" style="flex:1;min-width:220px"/>
+    <select id="sev"><option value="">All severities</option>
+      <option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+    <button onclick="load()">Search</button>
+  </div>
+
+  <table>
+    <thead><tr><th>IP</th><th>Severity</th><th>Country</th><th>ISP</th>
+      <th>Hits</th><th>Nodes</th><th>Rules</th><th>Last seen</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<footer>ScanGuard · open-source threat intelligence · data aggregated from reporting nodes</footer>
+
+<script>
+const fmtTime = s => s ? new Date(s).toLocaleString() : '';
+async function getJSON(u){ const r=await fetch(u); if(!r.ok) throw new Error(u+' '+r.status); return r.json(); }
+
+async function loadStats(){
+  const s = await getJSON('/api/stats');
+  const bySev = s.by_severity || {};
+  document.getElementById('stats').innerHTML = `
+    <div class="card stat"><div class="n">${s.total_ips.toLocaleString()}</div><div class="l">Malicious IPs</div></div>
+    <div class="card stat"><div class="n" style="color:var(--red)">${(bySev.critical||0).toLocaleString()}</div><div class="l">Critical</div></div>
+    <div class="card stat"><div class="n" style="color:var(--orange)">${(bySev.high||0).toLocaleString()}</div><div class="l">High</div></div>
+    <div class="card stat"><div class="n">${s.nodes||0}</div><div class="l">Reporting Nodes</div></div>
+    <div class="card stat"><div class="n">${(s.events||0).toLocaleString()}</div><div class="l">Total Events</div></div>`;
+}
+
+async function load(){
+  const q = document.getElementById('q').value.trim();
+  const sev = document.getElementById('sev').value;
+  const params = new URLSearchParams({limit:200});
+  if(q) params.set('q',q);
+  if(sev) params.set('severity',sev);
+  const rows = await getJSON('/api/threats?'+params);
+  document.getElementById('rows').innerHTML = rows.map(r=>`
+    <tr>
+      <td class="ip" onclick="openDetail('${r.ip}')">${r.ip}</td>
+      <td><span class="sev sev-${r.max_severity}">${r.max_severity}</span></td>
+      <td>${r.country||'<span class=muted>—</span>'}</td>
+      <td class="muted">${r.isp||''}</td>
+      <td>${r.total_hits}</td>
+      <td>${r.distinct_nodes}</td>
+      <td>${(r.rules||[]).map(x=>`<span class=tag>${x}</span>`).join('')}</td>
+      <td class="muted">${fmtTime(r.last_seen)}</td>
+    </tr>`).join('') || `<tr><td colspan=8 class=muted style="text-align:center;padding:30px">No results</td></tr>`;
+}
+
+async function openDetail(ip){
+  const t = await getJSON('/api/threats/'+ip);
+  const ev = (t.events||[]).map(e=>`
+    <div class=ev>
+      <b>${e.rule}</b> · <span class="sev sev-${e.severity}">${e.severity}</span>
+      · ${e.hit_count} hits
+      ${e.node_name? ' · <span class=muted>'+e.node_name+'</span>':''}
+      <div class=muted>${fmtTime(e.ts)} ${e.source?'· '+e.source:''}</div>
+    </div>`).join('');
+  document.getElementById('modal').innerHTML = `
+    <h2>${t.ip}</h2>
+    <p>
+      <span class="sev sev-${t.max_severity}">${t.max_severity}</span>
+      ${t.country? ' · '+[t.city,t.country].filter(Boolean).join(', '):''}
+      ${t.isp? ' · <span class=muted>'+t.isp+'</span>':''}
+      ${t.org && t.org!==t.isp? ' · <span class=muted>'+t.org+'</span>':''}
+    </p>
+    <p class=muted>First seen ${fmtTime(t.first_seen)} · last ${fmtTime(t.last_seen)} ·
+       ${t.total_hits} hits across ${t.distinct_nodes} node(s)</p>
+    <h3>Rules</h3><p>${(t.rules||[]).map(x=>`<span class=tag>${x}</span>`).join('')}</p>
+    <h3>Recent activity</h3>${ev||'<p class=muted>No events</p>'}
+    <h3>Evidence samples</h3>
+    ${(t.evidence||[]).slice(0,10).map(x=>`<div class=ev>${x}</div>`).join('')||'<p class=muted>—</p>'}
+    <p style="margin-top:18px"><button onclick="copyBlock('${t.ip}')">Copy iptables block</button>
+       <button class=ghost onclick="closeModal()">Close</button></p>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+function copyBlock(ip){ navigator.clipboard.writeText('iptables -I INPUT 1 -s '+ip+' -j DROP'); }
+function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') load(); });
+loadStats(); load();
+setInterval(loadStats, 60000);
+</script>
+</body>
+</html>
