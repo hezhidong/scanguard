@@ -3,13 +3,19 @@ config.yaml
 *.db
 geo-cache.json
 banned.json
-stats.jsonl
 notify.txt
-reports/
+.github-outbox.jsonl
 __pycache__/
 *.pyc
 .venv/
 venv/
 .env
-__pycache__/
-*.pyc
+
+# Agent local state (not the repo's reports/ directory, which Actions writes to)
+/stats.jsonl
+
+# Generated blocklist files (built by CI)
+/blocklist.txt
+/blocklist.iptables
+/blocklist.nftables
+/stats.json

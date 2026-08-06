@@ -2,17 +2,49 @@
 
 ScanGuard is a self-hosted, **open-source scanner detection & threat-intel
 platform**. It watches your web/auth logs for scanners and brute-forcers, blocks
-them at the firewall, and optionally reports every attacker to a central API that
-aggregates malicious IPs into a public, subscriptable blocklist.
+them at the firewall, and optionally reports every attacker to a **public GitHub
+repository** that aggregates malicious IPs into a community blocklist served
+over GitHub Pages — no central server required.
 
-It has four parts:
+## Architecture
+
+```
+┌─────────────┐    commits events     ┌──────────────────────┐
+│ Agent (VPS) │ ─────────────────────▶│ GitHub repo          │
+│  - scan logs│   Contents API + PAT  │  reports/<node>.jsonl│
+│  - block IP │                       │                      │
+└─────────────┘                       │  GitHub Actions:     │
+┌─────────────┐    commits events     │   aggregate.py       │
+│ Agent (VPS) │ ─────────────────────▶│         ↓            │
+└─────────────┘                       │  blocklist.{txt,     │
+                                      │    iptables,nft}     │
+                                      │  stats.json          │
+                                      │  threats.json        │
+                                      └──────────┬───────────┘
+                                                 │ GitHub Pages
+                                                 ▼
+                          https://hezhidong.github.io/scanguard/
+                          ├─ /             (dashboard)
+                          ├─ /blocklist.txt
+                          ├─ /blocklist.iptables
+                          └─ /blocklist.nftables
+```
+
+Any machine can consume the blocklist:
+```bash
+curl -s https://hezhidong.github.io/scanguard/blocklist.iptables | sudo iptables-restore
+```
+
+## Repository layout
 
 ```
 scanguard/
 ├── agent/        # ScanGuard Agent — log detection + auto-block (runs on each host)
-├── api/          # Central Threat Intel API — ingest, dedup, aggregate (FastAPI)
-├── web/          # Web UI — public malicious-IP profiles + search
-└── blocklist/    # blocklist subscription (served by the API: txt/iptables/nftables)
+├── api/          # Optional self-hosted FastAPI central (legacy, not needed for GitHub mode)
+├── web/          # Static dashboard (built to repo root by Actions, served via Pages)
+├── scripts/      # aggregate.py (CI: reports/* → blocklist + stats)
+├── reports/      # Per-node jsonl event files (committed by agents)
+└── .github/workflows/aggregate.yml
 ```
 
 ---
@@ -27,16 +59,55 @@ A single Python package (`scanguard`) that:
   **iptables · nftables · ufw · firewalld** (local or over SSH)
 - enriches IPs with **geolocation** (ip-api, cached)
 - keeps persistent state (never double-blocks), writes a notify file for chat bots
-- optionally **reports every block** to the Central Threat Intel API
+- optionally **reports every block to a public GitHub repo** (the new default)
+  or to a self-hosted HTTP API
 
-### Install & run
+### Install
 
 ```bash
 cd agent
 pip install -r requirements.txt
 sudo mkdir -p /etc/scanguard /var/lib/scanguard
 sudo cp ../examples/config.example.yaml /etc/scanguard/config.yaml
-sudo $EDITOR /etc/scanguard/config.yaml          # add servers, rules, whitelist
+sudo $EDITOR /etc/scanguard/config.yaml
+```
+
+### Configure GitHub reporting
+
+Generate a **fine-grained Personal Access Token** on GitHub:
+
+1. Settings → Developer settings → Personal access tokens → Fine-grained tokens
+2. **Only select repositories** → `scanguard`
+3. Repository permissions → **Contents: Read and write**
+4. Expiration: 90 days (rotate periodically)
+
+Save it on the server (never put it in the YAML):
+```bash
+echo 'github_pat_xxxx' | sudo tee /etc/scanguard/github_token
+sudo chmod 600 /etc/scanguard/github_token
+```
+
+Then in `config.yaml`:
+```yaml
+central:
+  enabled: true
+  backend: github
+  repo: hezhidong/scanguard
+  branch: master
+  node_id: vps-nyc-01      # unique per machine
+  node_name: NYC Web 01
+```
+
+The agent appends events to `reports/<node_id>.jsonl` via the Contents API, one
+commit per run. A local outbox (`/var/lib/scanguard/github-outbox.jsonl`)
+guarantees at-least-once delivery if the network blips.
+
+> **Privacy:** reports only contain IP / rule / severity / hit count / geo /
+> node metadata. No full URLs, query strings, or request evidence are sent.
+
+### Run
+
+```bash
 sudo python3 -m scanguard -c /etc/scanguard/config.yaml --dry-run --print
 sudo python3 -m scanguard -c /etc/scanguard/config.yaml --print
 ```
@@ -44,94 +115,82 @@ sudo python3 -m scanguard -c /etc/scanguard/config.yaml --print
 ### Schedule (systemd timer, every 30 min)
 
 ```bash
-sudo cp packaging/scanguard.service packaging/scanguard.timer /etc/systemd/system/
+sudo cp agent/packaging/scanguard.service agent/packaging/scanguard.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now scanguard.timer
 ```
 
 ### Firewall backends
 
-| Backend    | Persistence | Notes                                         |
-|------------|-------------|-----------------------------------------------|
-| iptables   | ✅ netfilter-persistent | default; works on most Linux hosts            |
-| nftables   | ✅ /etc/nftables.conf    | uses a `scanguard_blocklist` inet set         |
-| ufw        | —           | `ufw deny/reject from <ip>`                   |
-| firewalld  | ✅ permanent ipset       | `firewall-cmd --ipset` + reload               |
+| Backend    | Persistence             | Notes                                   |
+|------------|-------------------------|-----------------------------------------|
+| iptables   | netfilter-persistent    | default; works on most Linux hosts      |
+| nftables   | /etc/nftables.conf      | uses a `scanguard_blocklist` inet set   |
+| ufw        | —                       | `ufw deny/reject from <ip>`             |
+| firewalld  | permanent ipset         | `firewall-cmd --ipset` + reload         |
 
 Each backend can act **locally** or **on a remote host over SSH** (set
 `firewall.host/user/key`), so one agent can block at a perimeter/gateway box.
 
 ---
 
-## 2. Central Threat Intel API
+## 2. Central aggregation (GitHub Actions)
 
-A FastAPI service that receives blocks from every agent, de-duplicates by IP,
-and aggregates evidence across nodes.
+The workflow `.github/workflows/aggregate.yml` runs every 10 minutes (and on
+every push to `reports/`). It calls `scripts/aggregate.py`, which:
 
-```bash
-cd api
-pip install -r requirements.txt
-export SCANGUARD_DB=/var/lib/scanguard-api/threats.db
-export SCANGUARD_API_TOKEN=changeme       # bearer token agents must send
-uvicorn app.main:app --host 0.0.0.0 --port 8080
-```
+1. reads every `reports/*.jsonl`
+2. aggregates events by IP (takes max severity, sums hits, collects nodes/rules)
+3. writes:
+   - `blocklist.txt` / `blocklist.iptables` / `blocklist.nftables`
+   - `stats.json` (top counters for the dashboard)
+   - `threats.json` (full aggregated IP list)
+   - copies `web/index.html` to repo root
+4. commits the result back to the repo
 
-Endpoints:
+The blocklist includes only IPs with severity **high or critical**.
 
-| Method | Path                         | Purpose                            |
-|--------|------------------------------|------------------------------------|
-| POST   | `/api/report`                | Agent reports one blocked IP       |
-| POST   | `/api/report/batch`          | Batch ingest                       |
-| GET    | `/api/threats`               | Search/list (q, severity, country) |
-| GET    | `/api/threats/{ip}`          | Full profile: events + nodes       |
-| GET    | `/api/stats`                 | Summary counters                   |
-| GET    | `/blocklist.txt`             | Plain-IP subscription              |
-| GET    | `/blocklist.iptables`        | iptables-restore format            |
-| GET    | `/blocklist.nftables`        | nftables ruleset                   |
+### Enable GitHub Pages
 
-Set `min_severity=high|critical` on blocklist URLs to tune aggressiveness.
+After the first Actions run completes:
+
+1. Repo **Settings → Pages**
+2. Source: **Deploy from a branch**
+3. Branch: **master** / **/ (root)**
+4. Save. The dashboard goes live at
+   `https://hezhidong.github.io/scanguard/` in ~1 minute.
 
 ---
 
-## 3. Web UI
+## 3. Web dashboard
 
-Served automatically at `/` by the API (static files in `web/`). Shows:
+A single static HTML page (`web/index.html`) that loads `stats.json` +
+`threats.json` and renders:
 
-- global stats (IPs, severity breakdown, reporting nodes)
-- searchable table of malicious IPs with country/ISP/hit count/nodes/rules
-- a per-IP detail modal: geolocation, attack timeline, reporting nodes, evidence
+- global counters (IPs, severity breakdown, reporting nodes, events)
+- top countries / rules bar charts
+- searchable, sortable table
+- per-IP detail modal with recent activity timeline
+- one-click `iptables` block command copy
 
-### Point a node at the API
-
-In each agent's `config.yaml`:
-
-```yaml
-central:
-  enabled: true
-  url: https://threat.example.com
-  node_id: web-nyc-01
-  node_name: NYC Web 01
-  token: changeme
-```
+No backend, no JS frameworks, works on GitHub Pages directly.
 
 ---
 
 ## 4. Blocklist subscription
 
-Users who don't run the agent can still consume the aggregated blocklist:
-
 ```bash
-# plain list
-curl https://threat.example.com/blocklist.txt?min_severity=high
+# plain list (one IP per line)
+curl https://hezhidong.github.io/scanguard/blocklist.txt
 
 # iptables-restore format
-curl https://threat.example.com/blocklist.iptables?min_severity=high | sudo iptables-restore
+curl https://hezhidong.github.io/scanguard/blocklist.iptables | sudo iptables-restore
 
 # nftables
-curl https://threat.example.com/blocklist.nftables?min_severity=high | sudo nft -f -
+curl https://hezhidong.github.io/scanguard/blocklist.nftables | sudo nft -f -
 ```
 
-Cron it to pull every few hours and you've got a community-powered firewall.
+Cron it every few hours and you've got a community-powered firewall.
 
 ---
 
@@ -149,12 +208,20 @@ rules:
     threshold: 5
     window_minutes: 30
     severity: critical
-  - name: ssh-bruteforce      # for kind: auth sources
-    pattern: 'Failed password|Invalid user'
+  - name: ssh-bruteforce
+    pattern: 'Failed password|Invalid user|authentication failure'
     threshold: 5
     window_minutes: 10
     severity: high
 ```
+
+---
+
+## Optional: self-hosted central API (legacy)
+
+If you'd rather not use GitHub, a FastAPI service in `api/` accepts reports and
+serves the blocklist. See `api/README` in the source for setup. The agent
+supports it via `backend: http`.
 
 ---
 
@@ -163,8 +230,10 @@ rules:
 - **Whitelist your own IPs and monitoring ranges.** A misconfigured rule can block you.
 - Run the agent as root (it needs firewall access); the API needs no root.
 - Use SSH keys for remote log/firewall targets; password auth needs `sshpass`.
-- `ip-api` free tier is HTTP-only, non-commercial, and rate-limited; swap the
-  `geo` provider for a paid one if you run at scale.
+- The GitHub PAT only needs **Contents: Read and write** on the single repo.
+  Rotate it regularly. Revoke immediately if a host is compromised.
+- `ip-api` free tier is non-commercial and rate-limited; swap the `geo`
+  provider for a paid one at scale.
 
 ## License
 

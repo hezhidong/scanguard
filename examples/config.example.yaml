@@ -84,10 +84,25 @@ firewall:
   # key: ~/.ssh/id_ed25519
   # sudo: true
 
-# ── Central Threat Intel API (optional) ──────────────────────────────
+# ── Central Threat Intel (optional) ───────────────────────────────────
+# Two backends:
+#   backend: http   — POST blocks to a self-hosted FastAPI central API
+#   backend: github — append blocks to a public GitHub repo (no server needed;
+#                     a GitHub Actions workflow aggregates blocklist + dashboard)
 central:
   enabled: false
-  url: https://threat.example.com
-  node_id: node-nyc-01
+  backend: github            # http | github
+
+  # ── github backend ───────────────────────────────────────────────
+  # Create a fine-grained Personal Access Token with Contents: Read&write
+  # scoped ONLY to this repo. Put token in /etc/scanguard/token (chmod 600)
+  # or set SCANGUARD_GITHUB_TOKEN env var.
+  repo: hezhidong/scanguard
+  branch: master
+  node_id: node-nyc-01       # unique per machine; used as reports/<node_id>.jsonl
   node_name: NYC Web 01
-  token: ""                # bearer token
+  # token is read from SCANGUARD_GITHUB_TOKEN or file /etc/scanguard/github_token
+
+  # ── http backend (legacy self-hosted API) ────────────────────────
+  # url: https://threat.example.com
+  # token: "changeme"

@@ -14,7 +14,7 @@ from .config import AgentConfig
 from .detector import scan
 from .firewall import get_backend
 from .geo import lookup as geo_lookup
-from .reporter import report as central_report
+from .reporter import report as central_report, report_github, _sanitize_event
 from .state import StateStore
 
 
@@ -31,6 +31,8 @@ def run(config: AgentConfig) -> dict:
 
     results = []
     new_blocked = []
+    gh_events = []
+    outbox = config.state_dir / "github-outbox.jsonl"
     for hit in hits:
         if hit.ip in already:
             results.append({"ip": hit.ip, "rule": hit.rule, "status": "already-blocked"})
@@ -58,8 +60,15 @@ def run(config: AgentConfig) -> dict:
             })
             new_blocked.append((hit, geo, br))
             if config.central.enabled:
-                central_report(config.central, hit.ip, hit.rule, hit.severity,
-                               hit.count, hit.evidence, hit.source, geo)
+                if config.central.backend == "github":
+                    gh_events.append(_sanitize_event(
+                        hit.ip, hit.rule, hit.severity, hit.count, hit.source,
+                        geo, config.central.node_id or platform.node(),
+                        config.central.node_name or config.central.node_id or platform.node(),
+                    ))
+                else:
+                    central_report(config.central, hit.ip, hit.rule, hit.severity,
+                                   hit.count, hit.evidence, hit.source, geo)
         results.append({"ip": hit.ip, "rule": hit.rule, "status": status,
                         "already": br.already_blocked, "error": br.error,
                         "count": hit.count, "geo": geo})
@@ -73,6 +82,31 @@ def run(config: AgentConfig) -> dict:
                 isp = geo.get("isp", "?")
                 f.write(f"🚫 ScanGuard blocked {hit.ip} [{country}/{isp}] "
                         f"rule={hit.rule} hits={hit.count}\n")
+
+    # batch report to GitHub (one commit per agent run) with a local outbox
+    # so events survive transient network failures.
+    if config.central.enabled and config.central.backend == "github":
+        if gh_events:
+            with outbox.open("a") as f:
+                for e in gh_events:
+                    f.write(json.dumps(e, ensure_ascii=False) + "\n")
+        if outbox.exists():
+            pending = []
+            for ln in outbox.read_text().splitlines():
+                ln = ln.strip()
+                if ln:
+                    try:
+                        pending.append(json.loads(ln))
+                    except Exception:
+                        pass
+            if pending:
+                ok = report_github(config.central, pending)
+                if ok:
+                    outbox.write_text("")
+                else:
+                    print(f"[scanguard] WARN: github report failed "
+                          f"({len(pending)} event(s) queued in {outbox})",
+                          file=sys.stderr)
 
     state.append_stats({
         "ts": datetime.now(timezone.utc).isoformat(),

@@ -1,0 +1,42 @@
+name: aggregate-blocklist
+
+on:
+  # Rebuild every 10 minutes (catches newly committed agent reports)
+  schedule:
+    - cron: '*/10 * * * *'
+  # Also rebuild whenever reports/ changes via push or manual trigger
+  push:
+    paths:
+      - 'reports/**'
+      - 'scripts/aggregate.py'
+      - 'web/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aggregate
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Aggregate reports into blocklist + stats
+        run: python3 scripts/aggregate.py
+
+      - name: Commit generated files
+        run: |
+          git config user.name "scanguard-bot"
+          git config user.email "scanguard-bot@users.noreply.github.com"
+          git add blocklist.txt blocklist.iptables blocklist.nftables \
+                  stats.json threats.json index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: rebuild blocklist + stats [skip ci]"
+            git push
+          fi

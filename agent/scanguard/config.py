@@ -63,12 +63,23 @@ class FirewallConfig:
 
 @dataclass
 class CentralConfig:
-    """Report blocked IPs to a Central Threat Intel API."""
+    """Report blocked IPs to a Central Threat Intel API.
+
+    backend: http      — POST to {url}/api/report with a Bearer token (legacy)
+    backend: github    — append to a public GitHub repo via the Contents API;
+                         a GitHub Actions workflow aggregates the blocklist.
+    """
     enabled: bool = False
+    backend: str = "http"             # http | github
     url: Optional[str] = None
     node_id: Optional[str] = None
-    token: Optional[str] = None
     node_name: Optional[str] = None
+    token: Optional[str] = None       # http: Bearer token; github: fine-grained PAT
+    # github backend only:
+    repo: Optional[str] = None        # owner/name, e.g. hezhidong/scanguard
+    branch: str = "master"
+    reports_path: Optional[str] = None  # default: reports/<node_id>.jsonl
+    max_lines: int = 5000             # per-file cap before oldest events are trimmed
 
 
 @dataclass
@@ -100,6 +111,20 @@ class AgentConfig:
             notify_file=data.get("notify_file"),
             dry_run=bool(data.get("dry_run", False)),
         )
+        # Resolve central token from env / file if not inline
+        if cfg.central.enabled and not cfg.central.token:
+            import pathlib
+            env = os.environ.get("SCANGUARD_GITHUB_TOKEN") or os.environ.get("SCANGUARD_CENTRAL_TOKEN")
+            if env:
+                cfg.central.token = env.strip()
+            else:
+                for p in ("/etc/scanguard/github_token", "/etc/scanguard/central_token"):
+                    try:
+                        if pathlib.Path(p).exists():
+                            cfg.central.token = pathlib.Path(p).read_text().strip()
+                            break
+                    except Exception:
+                        pass
         return cfg
 
     @staticmethod
