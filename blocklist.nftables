@@ -1,0 +1,13 @@
+# ScanGuard blocklist (nftables format)
+# Generated: 2026-08-06T17:50:19+00:00
+# Entries: 0
+table inet scanguard {
+  set blocklist {
+    type ipv4_addr
+    flags interval
+    elements = {  }
+  }
+  chain input {
+    type filter hook input priority 0; ip saddr @blocklist drop
+  }
+}

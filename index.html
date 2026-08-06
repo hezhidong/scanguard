@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ScanGuard — Community Threat Intel</title>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --border:#30363d; --text:#e6edf3;
+          --muted:#8b949e; --red:#f85149; --orange:#d29922; --blue:#58a6ff; --green:#3fb950; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--text); }
+  header { padding:24px 32px; border-bottom:1px solid var(--border); display:flex;
+           align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  header h1 { margin:0; font-size:22px; }
+  header .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 32px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:28px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .stat .n { font-size:30px; font-weight:700; }
+  .stat .l { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  input, select, button { background:var(--card); color:var(--text); border:1px solid var(--border);
+          border-radius:8px; padding:8px 12px; font-size:14px; }
+  button { cursor:pointer; background:var(--blue); color:#fff; border:none; }
+  button.ghost, a.ghost { background:var(--card); border:1px solid var(--border); color:var(--text);
+          text-decoration:none; display:inline-block; padding:8px 12px; border-radius:8px; font-size:14px; }
+  table { width:100%; border-collapse:collapse; background:var(--card);
+          border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  th,td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+  th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px; cursor:pointer; user-select:none; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#1c2330; }
+  .ip { font-family:ui-monospace,monospace; color:var(--blue); cursor:pointer; }
+  .sev { padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; }
+  .sev-low { background:#1f2d1f; color:var(--green); }
+  .sev-medium { background:#2d2817; color:var(--orange); }
+  .sev-high { background:#2d1d1d; color:var(--red); }
+  .sev-critical { background:#3d1114; color:#fff; }
+  .muted { color:var(--muted); }
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:50;
+              align-items:center; justify-content:center; padding:20px; }
+  .modal-bg.show { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:12px;
+           max-width:760px; width:100%; max-height:85vh; overflow:auto; padding:24px; }
+  .modal h2 { margin-top:0; font-family:ui-monospace,monospace; }
+  .ev { border-left:2px solid var(--border); padding:6px 12px; margin:8px 0; font-size:13px; }
+  .tag { display:inline-block; background:#21262d; border:1px solid var(--border);
+         border-radius:6px; padding:1px 7px; margin:2px; font-size:11px; }
+  a { color:var(--blue); }
+  footer { color:var(--muted); font-size:12px; text-align:center; padding:24px; }
+  .topbar { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+  .topbar .card { flex:1; min-width:240px; }
+  .topbar h3 { margin:0 0 10px; font-size:12px; text-transform:uppercase; color:var(--muted); letter-spacing:.5px; }
+  .bar-row { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:13px; }
+  .bar-row .label { width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-row .bar { flex:1; height:8px; background:#21262d; border-radius:4px; overflow:hidden; }
+  .bar-row .bar > i { display:block; height:100%; background:var(--blue); }
+  .bar-row .val { width:40px; text-align:right; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🛡️ ScanGuard Threat Intel</h1>
+    <div class="sub">Community-driven scanner &amp; brute-force blocklist · data updated every ~10 min</div>
+  </div>
+  <div class="toolbar">
+    <a class="ghost" href="blocklist.txt" target="_blank">blocklist.txt</a>
+    <a class="ghost" href="blocklist.iptables" target="_blank">iptables</a>
+    <a class="ghost" href="blocklist.nftables" target="_blank">nftables</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <div class="topbar">
+    <div class="card"><h3>Top countries</h3><div id="countries"></div></div>
+    <div class="card"><h3>Top rules</h3><div id="rules"></div></div>
+  </div>
+
+  <div class="toolbar">
+    <input id="q" placeholder="Search IP / country / ISP / rule…" style="flex:1;min-width:220px"/>
+    <select id="sev"><option value="">All severities</option>
+      <option>critical</option><option>high</option><option>medium</option><option>low</option></select>
+    <button onclick="applyFilter()">Search</button>
+    <span class="muted" id="count"></span>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th onclick="sortBy('ip')">IP</th>
+      <th onclick="sortBy('max_severity')">Severity</th>
+      <th onclick="sortBy('country')">Country</th>
+      <th>ISP</th>
+      <th onclick="sortBy('total_hits')">Hits</th>
+      <th onclick="sortBy('distinct_nodes')">Nodes</th>
+      <th>Rules</th>
+      <th onclick="sortBy('last_seen')">Last seen</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<footer>
+  ScanGuard · open-source threat intelligence ·
+  <a href="https://github.com/hezhidong/scanguard" target="_blank">github.com/hezhidong/scanguard</a>
+  <br/><span class="muted" id="generated"></span>
+</footer>
+
+<script>
+const fmtTime = s => s ? new Date(s).toLocaleString() : '';
+const SEV_RANK = {critical:4, high:3, medium:2, low:1};
+let ALL = [];
+let STATS = {};
+let sortKey = 'total_hits';
+let sortDir = -1;
+
+async function getJSON(u){
+  const r = await fetch(u + (u.includes('?')?'&':'?') + '_=' + Date.now(), {cache:'no-store'});
+  if(!r.ok) throw new Error(u+' '+r.status);
+  return r.json();
+}
+
+function barList(container, pairs){
+  if(!pairs || !pairs.length){ container.innerHTML = '<div class=muted>—</div>'; return; }
+  const max = Math.max(...pairs.map(p=>p[1]));
+  container.innerHTML = pairs.map(([k,v])=>`
+    <div class="bar-row" title="${k||''}">
+      <span class="label">${k||'—'}</span>
+      <span class="bar"><i style="width:${Math.round(v/max*100)}%"></i></span>
+      <span class="val">${v}</span>
+    </div>`).join('');
+}
+
+async function loadAll(){
+  try {
+    [STATS, ALL] = await Promise.all([getJSON('stats.json'), getJSON('threats.json')]);
+  } catch(e) {
+    document.getElementById('rows').innerHTML =
+      '<tr><td colspan=8 class=muted style="text-align:center;padding:30px">Failed to load data</td></tr>';
+    return;
+  }
+  const bs = STATS.by_severity || {};
+  document.getElementById('stats').innerHTML = `
+    <div class="card stat"><div class="n">${(STATS.total_ips||0).toLocaleString()}</div><div class="l">Malicious IPs</div></div>
+    <div class="card stat"><div class="n" style="color:var(--red)">${(bs.critical||0).toLocaleString()}</div><div class="l">Critical</div></div>
+    <div class="card stat"><div class="n" style="color:var(--orange)">${(bs.high||0).toLocaleString()}</div><div class="l">High</div></div>
+    <div class="card stat"><div class="n">${STATS.nodes||0}</div><div class="l">Reporting Nodes</div></div>
+    <div class="card stat"><div class="n">${(STATS.events||0).toLocaleString()}</div><div class="l">Total Events</div></div>`;
+  barList(document.getElementById('countries'), STATS.top_countries);
+  barList(document.getElementById('rules'), STATS.top_rules);
+  document.getElementById('generated').textContent = 'Generated ' + fmtTime(STATS.generated_at);
+  applyFilter();
+}
+
+function applyFilter(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const sev = document.getElementById('sev').value;
+  let rows = ALL.filter(r=>{
+    if(sev && r.max_severity !== sev) return false;
+    if(q){
+      const hay = [r.ip, r.country, r.city, r.isp, r.org, (r.rules||[]).join(' ')].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  rows.sort((a,b)=>{
+    let va=a[sortKey], vb=b[sortKey];
+    if(sortKey==='max_severity'){ va=SEV_RANK[va]||0; vb=SEV_RANK[vb]||0; }
+    if(typeof va==='string'){
+      va=va.toLowerCase(); vb=String(vb||'').toLowerCase();
+      return va<vb ? -1*sortDir : va>vb ? 1*sortDir : 0;
+    }
+    return ((vb||0)-(va||0))*sortDir;
+  });
+  document.getElementById('count').textContent = rows.length + ' result(s)';
+  const show = rows.slice(0, 500);
+  document.getElementById('rows').innerHTML = show.map(r=>`
+    <tr>
+      <td class="ip" onclick="openDetail('${r.ip}')">${r.ip}</td>
+      <td><span class="sev sev-${r.max_severity}">${r.max_severity}</span></td>
+      <td>${r.country||'<span class=muted>—</span>'}</td>
+      <td class="muted">${r.isp||''}</td>
+      <td>${r.total_hits}</td>
+      <td>${r.distinct_nodes}</td>
+      <td>${(r.rules||[]).slice(0,3).map(x=>`<span class=tag>${x}</span>`).join('')}</td>
+      <td class="muted">${fmtTime(r.last_seen)}</td>
+    </tr>`).join('') || `<tr><td colspan=8 class=muted style="text-align:center;padding:30px">No results</td></tr>`;
+}
+
+function sortBy(k){
+  if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=-1; }
+  applyFilter();
+}
+
+function openDetail(ip){
+  const t = ALL.find(x=>x.ip===ip);
+  if(!t) return;
+  const ev = (t.events||[]).map(e=>`
+    <div class=ev>
+      <b>${e.rule}</b> · <span class="sev sev-${e.severity}">${e.severity}</span>
+      · ${e.hit_count} hits
+      ${e.node_name? ' · <span class=muted>'+e.node_name+'</span>':''}
+      <div class=muted>${fmtTime(e.ts)} ${e.source_kind?'· '+e.source_kind:''}</div>
+    </div>`).join('');
+  document.getElementById('modal').innerHTML = `
+    <h2>${t.ip}</h2>
+    <p>
+      <span class="sev sev-${t.max_severity}">${t.max_severity}</span>
+      ${t.country? ' · '+[t.city,t.country].filter(Boolean).join(', '):''}
+      ${t.isp? ' · <span class=muted>'+t.isp+'</span>':''}
+      ${t.org && t.org!==t.isp? ' · <span class=muted>'+t.org+'</span>':''}
+    </p>
+    <p class=muted>First seen ${fmtTime(t.first_seen)} · last ${fmtTime(t.last_seen)} ·
+       ${t.total_hits} hits across ${t.distinct_nodes} node(s)</p>
+    <h3>Rules</h3><p>${(t.rules||[]).map(x=>`<span class=tag>${x}</span>`).join('')}</p>
+    <h3>Recent activity</h3>${ev||'<p class=muted>No events</p>'}
+    <p style="margin-top:18px"><button onclick="copyBlock('${t.ip}')">Copy iptables block</button>
+       <button class=ghost onclick="closeModal()">Close</button></p>`;
+  document.getElementById('modalBg').classList.add('show');
+}
+function copyBlock(ip){ navigator.clipboard.writeText('iptables -I INPUT 1 -s '+ip+' -j DROP'); }
+function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+
+document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') applyFilter(); });
+loadAll();
+setInterval(loadAll, 300000);
+</script>
+</body>
+</html>

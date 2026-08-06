@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-08-06T17:50:19+00:00",
+  "total_ips": 0,
+  "events": 0,
+  "nodes": 0,
+  "node_ids": [],
+  "by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "top_countries": [],
+  "top_rules": []
+}

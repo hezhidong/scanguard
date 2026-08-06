@@ -1,21 +1,19 @@
-# state / secrets
+# state / secrets (agent local, never commit)
 config.yaml
 *.db
 geo-cache.json
 banned.json
 notify.txt
-.github-outbox.jsonl
+github-outbox.jsonl
 __pycache__/
 *.pyc
 .venv/
 venv/
 .env
 
-# Agent local state (not the repo's reports/ directory, which Actions writes to)
+# Agent local run stats (not the public stats.json built by CI)
 /stats.jsonl
 
-# Generated blocklist files (built by CI)
-/blocklist.txt
-/blocklist.iptables
-/blocklist.nftables
-/stats.json
+# Note: blocklist.txt / blocklist.iptables / blocklist.nftables / stats.json /
+# threats.json at repo root are BUILT by .github/workflows/aggregate.yml and
+# ARE committed (they are what GitHub Pages serves).
