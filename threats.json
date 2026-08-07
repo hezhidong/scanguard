@@ -1,1 +1,1 @@
-[{"ip": "192.0.2.1", "max_severity": "high", "total_hits": 42, "distinct_nodes": 1, "rules": ["nginx-php-scanner"], "first_seen": "2026-08-07T08:00:00+00:00", "last_seen": "2026-08-07T08:00:00+00:00", "country": "Test", "city": "Testville", "isp": "Example ISP", "org": "Example", "events": [{"ts": "2026-08-07T08:00:00+00:00", "rule": "nginx-php-scanner", "severity": "high", "hit_count": 42, "node_id": "ai-agent", "node_name": "ai-agent (PHP Scanner Catcher)", "source_kind": "nginx"}]}]
+[]
