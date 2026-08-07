@@ -1,5 +1,8 @@
 # 🛡️ ScanGuard
 
+**English** | [简体中文](README.zh-CN.md)
+
+
 ScanGuard is a self-hosted, **open-source scanner detection & threat-intel
 platform**. It watches your web/auth logs for scanners and brute-forcers, blocks
 them at the firewall, and optionally reports every attacker to a **public GitHub
