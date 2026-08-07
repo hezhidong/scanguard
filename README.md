@@ -47,6 +47,7 @@ scanguard/
 ├── web/          # Static dashboard (built to repo root by Actions, served via Pages)
 ├── scripts/      # aggregate.py (CI: reports/* → blocklist + stats)
 ├── reports/      # Per-node jsonl event files (committed by agents)
+├── install.sh    # One-shot agent installer (see Quick Start below)
 └── .github/workflows/aggregate.yml
 ```
 
@@ -65,7 +66,62 @@ A single Python package (`scanguard`) that:
 - optionally **reports every block to a public GitHub repo** (the new default)
   or to a self-hosted HTTP API
 
-### Install
+### Quick start (one command)
+
+The install script downloads the agent, installs Python deps, generates
+`/etc/scanguard/config.yaml`, saves your GitHub token, and installs a systemd
+timer that runs every 30 minutes — all in one shot:
+
+```bash
+github_pat=your…_XX  # fine-grained PAT, see note below
+
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_GITHUB_TOKEN=*** bash
+```
+
+That's it. The timer starts immediately. Verify:
+
+```bash
+systemctl status scanguard.timer
+sudo journalctl -u scanguard.service -n 50
+```
+
+**Custom node id / firewall backend / log paths:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_GITHUB_TOKEN=*** \
+       SG_NODE_ID=web-01 SG_NODE_NAME="Web Server 01" \
+       SG_FIREWALL=nftables \
+       SG_WHITELIST=127.0.0.1,::1,203.0.113.10 \
+       bash
+```
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SG_GITHUB_TOKEN` | _prompts_ | Fine-grained PAT with Contents: Read&write on this repo |
+| `SG_NODE_ID` | `$(hostname)` | Unique id → `reports/<node_id>.jsonl` |
+| `SG_NODE_NAME` | same as node id | Human-readable node label shown in dashboard |
+| `SG_FIREWALL` | `iptables` | `iptables` / `nftables` / `ufw` / `firewalld` |
+| `SG_LOG_PATHS` | `/var/log/nginx/access.log,/var/log/nginx/access.log.1` | Comma-separated nginx access logs |
+| `SG_WHITELIST` | `127.0.0.1,::1` | Comma-separated IPs/CIDRs that must never be blocked |
+| `SG_INSTALL_DIR` | `/opt/scanguard` | Where the agent code lives |
+| `SG_SKIP_SYSTEMD` | `0` | Set `1` in containers / non-systemd hosts |
+
+> **No token on the command line?** Just run `sudo bash install.sh` and it will
+> prompt for the token interactively (input hidden).
+
+#### How to create the GitHub token
+
+1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. **Only select repositories** → `scanguard`
+3. Repository permissions → **Contents: Read and write**
+4. Expiration: 90 days (rotate periodically)
+
+> **Privacy:** reports contain only IP / rule / severity / hit count / geo /
+> node metadata. No full URLs, query strings, or request evidence are uploaded.
+
+### Manual install (if you prefer to do it by hand)
 
 ```bash
 cd agent
@@ -75,47 +131,8 @@ sudo cp ../examples/config.example.yaml /etc/scanguard/config.yaml
 sudo $EDITOR /etc/scanguard/config.yaml
 ```
 
-### Configure GitHub reporting
-
-Generate a **fine-grained Personal Access Token** on GitHub:
-
-1. Settings → Developer settings → Personal access tokens → Fine-grained tokens
-2. **Only select repositories** → `scanguard`
-3. Repository permissions → **Contents: Read and write**
-4. Expiration: 90 days (rotate periodically)
-
-Save it on the server (never put it in the YAML):
-```bash
-echo 'github_pat_xxxx' | sudo tee /etc/scanguard/github_token
-sudo chmod 600 /etc/scanguard/github_token
-```
-
-Then in `config.yaml`:
-```yaml
-central:
-  enabled: true
-  backend: github
-  repo: hezhidong/scanguard
-  branch: master
-  node_id: vps-nyc-01      # unique per machine
-  node_name: NYC Web 01
-```
-
-The agent appends events to `reports/<node_id>.jsonl` via the Contents API, one
-commit per run. A local outbox (`/var/lib/scanguard/github-outbox.jsonl`)
-guarantees at-least-once delivery if the network blips.
-
-> **Privacy:** reports only contain IP / rule / severity / hit count / geo /
-> node metadata. No full URLs, query strings, or request evidence are sent.
-
-### Run
-
-```bash
-sudo python3 -m scanguard -c /etc/scanguard/config.yaml --dry-run --print
-sudo python3 -m scanguard -c /etc/scanguard/config.yaml --print
-```
-
-### Schedule (systemd timer, every 30 min)
+Save the token to `/etc/scanguard/github_token` (chmod 600), then enable the
+timer:
 
 ```bash
 sudo cp agent/packaging/scanguard.service agent/packaging/scanguard.timer /etc/systemd/system/
