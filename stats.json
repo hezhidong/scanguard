@@ -1,15 +1,27 @@
 {
-  "generated_at": "2026-08-07T07:44:51+00:00",
-  "total_ips": 0,
-  "events": 0,
-  "nodes": 0,
-  "node_ids": [],
+  "generated_at": "2026-08-07T08:08:22+00:00",
+  "total_ips": 1,
+  "events": 1,
+  "nodes": 1,
+  "node_ids": [
+    "ai-agent"
+  ],
   "by_severity": {
     "critical": 0,
-    "high": 0,
+    "high": 1,
     "medium": 0,
     "low": 0
   },
-  "top_countries": [],
-  "top_rules": []
+  "top_countries": [
+    [
+      "Test",
+      1
+    ]
+  ],
+  "top_rules": [
+    [
+      "nginx-php-scanner",
+      1
+    ]
+  ]
 }

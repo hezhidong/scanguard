@@ -1,6 +1,7 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-07T07:44:51+00:00
-# Entries: 0
+# Generated: 2026-08-07T08:08:22+00:00
+# Entries: 1
 
 *filter
+-A INPUT -s 192.0.2.1 -j DROP  # Test Example ISP
 COMMIT
