@@ -45,6 +45,7 @@ scanguard/
 ├── web/          # 静态仪表盘（由 Actions 构建到仓库根目录，通过 Pages 提供服务）
 ├── scripts/      # aggregate.py（CI：reports/* → blocklist + stats）
 ├── reports/      # 各节点的 jsonl 事件文件（由 agent 提交）
+├── install.sh    # 一键安装脚本（见下方快速开始）
 └── .github/workflows/aggregate.yml
 ```
 
@@ -63,7 +64,62 @@ scanguard/
 - 可选地把**每次封禁上报到公开 GitHub 仓库**（新的默认方案），
   或上报到自托管的 HTTP API
 
-### 安装
+### 快速开始（一条命令）
+
+安装脚本会自动完成：下载 agent、安装 Python 依赖、生成
+`/etc/scanguard/config.yaml`、保存 GitHub token、安装每 30 分钟执行一次的
+systemd timer。全部一步搞定：
+
+```bash
+github_pat=your…_XX  # fine-grained PAT，创建方法见下
+
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_GITHUB_TOKEN=*** bash
+```
+
+就这些。timer 已经立即启动。验证：
+
+```bash
+systemctl status scanguard.timer
+sudo journalctl -u scanguard.service -n 50
+```
+
+**自定义节点名 / 防火墙后端 / 日志路径：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_GITHUB_TOKEN=*** \
+       SG_NODE_ID=web-01 SG_NODE_NAME="Web Server 01" \
+       SG_FIREWALL=nftables \
+       SG_WHITELIST=127.0.0.1,::1,203.0.113.10 \
+       bash
+```
+
+| 变量 | 默认值 | 用途 |
+|---|---|---|
+| `SG_GITHUB_TOKEN` | _交互式提示_ | 针对该仓库开通 Contents: Read&write 的 fine-grained PAT |
+| `SG_NODE_ID` | `$(hostname)` | 节点唯一 ID → `reports/<node_id>.jsonl` |
+| `SG_NODE_NAME` | 与 node id 相同 | 仪表盘上显示的节点名称 |
+| `SG_FIREWALL` | `iptables` | `iptables` / `nftables` / `ufw` / `firewalld` |
+| `SG_LOG_PATHS` | `/var/log/nginx/access.log,/var/log/nginx/access.log.1` | 逗号分隔的 nginx access 日志路径 |
+| `SG_WHITELIST` | `127.0.0.1,::1` | 逗号分隔的、永远不应被封禁的 IP/CIDR |
+| `SG_INSTALL_DIR` | `/opt/scanguard` | agent 代码安装位置 |
+| `SG_SKIP_SYSTEMD` | `0` | 容器/无 systemd 环境下设为 `1` |
+
+> **不想把 token 放在命令行？** 直接运行 `sudo bash install.sh`，脚本会在终端
+> 交互式提示你粘贴 token（输入不可见）。
+
+#### 如何创建 GitHub Token
+
+1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. **Only select repositories（仅选择仓库）** → `scanguard`
+3. Repository permissions（仓库权限） → **Contents: Read and write**
+4. Expiration（有效期）：90 天（请定期轮换）
+
+> **隐私说明：** 上报内容只包含 IP / 规则 / 严重级别 / 命中次数 / 归属地 /
+> 节点元数据，不会发送完整 URL、查询字符串或请求证据。
+
+### 手动安装（如果你希望自己一步步来）
 
 ```bash
 cd agent
@@ -73,47 +129,7 @@ sudo cp ../examples/config.example.yaml /etc/scanguard/config.yaml
 sudo $EDITOR /etc/scanguard/config.yaml
 ```
 
-### 配置 GitHub 上报
-
-在 GitHub 上生成一个 **fine-grained Personal Access Token（细粒度个人访问令牌）**：
-
-1. Settings → Developer settings → Personal access tokens → Fine-grained tokens
-2. **Only select repositories（仅选择仓库）** → `scanguard`
-3. Repository permissions（仓库权限） → **Contents: Read and write**
-4. Expiration（有效期）：90 天（定期轮换）
-
-把它保存在服务器上（切勿写入 YAML 配置文件）：
-```bash
-echo 'github_pat_xxxx' | sudo tee /etc/scanguard/github_token
-sudo chmod 600 /etc/scanguard/github_token
-```
-
-然后在 `config.yaml` 中配置：
-```yaml
-central:
-  enabled: true
-  backend: github
-  repo: hezhidong/scanguard
-  branch: master
-  node_id: vps-nyc-01      # 每台机器唯一
-  node_name: NYC Web 01
-```
-
-Agent 会通过 Contents API 把事件追加到 `reports/<node_id>.jsonl`，每次运行
-产生一次提交。本地的 outbox（`/var/lib/scanguard/github-outbox.jsonl`）
-在网络抖动时保证至少一次（at-least-once）投递。
-
-> **隐私说明：** 上报内容只包含 IP / 规则 / 严重级别 / 命中次数 / 归属地 /
-> 节点元数据，**不会**发送完整 URL、查询字符串或请求证据。
-
-### 运行
-
-```bash
-sudo python3 -m scanguard -c /etc/scanguard/config.yaml --dry-run --print
-sudo python3 -m scanguard -c /etc/scanguard/config.yaml --print
-```
-
-### 计划任务（systemd timer，每 30 分钟一次）
+把 token 保存到 `/etc/scanguard/github_token`（权限 600），然后启用 timer：
 
 ```bash
 sudo cp agent/packaging/scanguard.service agent/packaging/scanguard.timer /etc/systemd/system/
