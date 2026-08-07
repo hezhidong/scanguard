@@ -1,23 +1,62 @@
-"""Report blocked IPs to a Central Threat Intel API or a GitHub repository.
+"""Report blocked IPs to the public community intake, a self-hosted central
+API, or a GitHub fork.
 
-Two backends:
-  - http:   POST {url}/api/report (legacy FastAPI central)
-  - github: append to reports/<node_id>.jsonl via the GitHub Contents API
-            (the public repo acts as both database and blocklist host; a
-            GitHub Actions workflow aggregates reports/* into blocklist + stats)
+Three backends:
+  - community: POST events to the ScanGuard Cloudflare Worker (no token);
+               the worker validates/rate-limits and appends to the central repo.
+  - http:      POST {url}/api/report (legacy FastAPI central)
+  - github:    append to reports/<node_id>.jsonl via the GitHub Contents API.
 """
 from __future__ import annotations
 
 import base64
 import json
 import platform
+import sys
 import urllib.request
 from datetime import datetime, timezone
 from typing import Iterable, Optional
 
-from .config import CentralConfig
+from .config import CentralConfig, CommunityConfig
 
 GITHUB_API = "https://api.github.com"
+
+
+# ── Community backend (public Cloudflare Worker, no token) ───────────
+
+def report_community(cfg: CommunityConfig, events: Iterable[dict]) -> bool:
+    """POST sanitized events to the public community intake.
+
+    `events` is an iterable of dicts as produced by _sanitize_event.
+    Returns True if the server accepted the batch (HTTP 2xx).
+    Failures are non-fatal — community contribution must never break local
+    blocking — and are logged to stderr.
+    """
+    if not cfg.enabled or not cfg.endpoint:
+        return False
+    events = [e for e in events if e]
+    if not events:
+        return True
+
+    # Strip fields the community endpoint does not need / must not receive.
+    # It only cares about ip/rule/severity/hits/geo/node metadata.
+    allowed = {"ts", "ip", "rule", "severity", "hits",
+               "country", "city", "isp", "org",
+               "node_id", "node_name"}
+    payload = [{k: v for k, v in e.items() if k in allowed} for e in events]
+    data = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        cfg.endpoint,
+        data=data,
+        headers={"Content-Type": "application/json", "User-Agent": "scanguard-agent"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=cfg.timeout) as r:
+            return 200 <= r.status < 300
+    except Exception as exc:
+        print(f"[scanguard] WARN: community report failed: {exc}", file=sys.stderr)
+        return False
 
 
 # ── HTTP backend (legacy) ────────────────────────────────────────────
