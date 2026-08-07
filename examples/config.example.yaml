@@ -1,5 +1,8 @@
 # ScanGuard Agent example configuration
 # Copy to /etc/scanguard/config.yaml and edit.
+#
+# For a zero-config install, use:
+#   curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh | sudo bash
 
 state_dir: /var/lib/scanguard
 
@@ -84,25 +87,31 @@ firewall:
   # key: ~/.ssh/id_ed25519
   # sudo: true
 
-# ── Central Threat Intel (optional) ───────────────────────────────────
-# Two backends:
-#   backend: http   — POST blocks to a self-hosted FastAPI central API
-#   backend: github — append blocks to a public GitHub repo (no server needed;
-#                     a GitHub Actions workflow aggregates blocklist + dashboard)
+# ── Community Threat Intel (default ON, no token required) ───────────
+# Every blocked IP is reported to the public ScanGuard intake endpoint
+# (a Cloudflare Worker). The worker validates, rate-limits, and appends
+# events to the central GitHub repo so your blocks contribute to the
+# global blocklist and dashboard.
+#
+# Set enabled: false to keep blocks local.
+community:
+  enabled: true
+  endpoint: https://scanguard-intake.hezhidong.workers.dev/report
+  node_id: node-nyc-01       # unique per machine; defaults to hostname
+  node_name: NYC Web 01      # display name in dashboard
+  timeout: 10
+
+# ── Self-hosted fork (OPTIONAL — requires a GitHub PAT) ──────────────
+# If you run your own fork and dashboard, set this to push events there
+# as well. You can run this alongside community reporting (both on).
+#
+# Create a fine-grained PAT with Contents: Read&write on YOUR fork, save
+# it to /etc/scanguard/github_token (chmod 600), then:
 central:
   enabled: false
-  backend: github            # http | github
-
-  # ── github backend ───────────────────────────────────────────────
-  # Create a fine-grained Personal Access Token with Contents: Read&write
-  # scoped ONLY to this repo. Put token in /etc/scanguard/token (chmod 600)
-  # or set SCANGUARD_GITHUB_TOKEN env var.
-  repo: hezhidong/scanguard
+  backend: github
+  repo: yourname/scanguard     # your fork
   branch: master
-  node_id: node-nyc-01       # unique per machine; used as reports/<node_id>.jsonl
+  node_id: node-nyc-01
   node_name: NYC Web 01
-  # token is read from SCANGUARD_GITHUB_TOKEN or file /etc/scanguard/github_token
-
-  # ── http backend (legacy self-hosted API) ────────────────────────
-  # url: https://threat.example.com
-  # token: "changeme"
+  # token is read from SCANGUARD_GITHUB_TOKEN or /etc/scanguard/github_token
