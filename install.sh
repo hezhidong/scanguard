@@ -2,29 +2,23 @@
 # =============================================================================
 # ScanGuard Agent - one-shot installer
 #
-# Quick start:
+# Quick start (community reporting, zero config):
 #   curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh | sudo bash
 #
-# Or with parameters (non-interactive):
+# With a custom node id:
 #   curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
-#     | sudo SG_NODE_ID=web-01 SG_NODE_NAME="Web Server 01" \
-#       SG_GITHUB_TOKEN=github_pat_XXXX bash
+#     | sudo SG_NODE_ID=web-01 SG_NODE_NAME="Web Server 01" bash
 #
-# Supported env vars (all optional; script prompts for what it needs):
-#   SG_REPO           GitHub repo (default: hezhidong/scanguard)
-#   SG_BRANCH         branch to install from (default: master)
-#   SG_NODE_ID        unique node id, used as reports/<node_id>.jsonl
-#                     (default: hostname)
-#   SG_NODE_NAME      human-readable node name (default: hostname)
-#   SG_GITHUB_TOKEN   fine-grained PAT with Contents: Read&write on the repo
-#                     (if omitted, script prompts and saves to /etc/scanguard/github_token)
-#   SG_FIREWALL       iptables | nftables | ufw | firewalld (default: iptables)
-#   SG_LOG_PATHS      comma-separated nginx access log paths
-#                     (default: /var/log/nginx/access.log,/var/log/nginx/access.log.1)
-#   SG_WHITELIST      comma-separated IPs/CIDRs to never block
-#                     (default: 127.0.0.1,::1)
-#   SG_INSTALL_DIR    where to put the agent code (default: /opt/scanguard)
-#   SG_SKIP_SYSTEMD   set to 1 to skip timer installation (containers, cron users)
+# To also run your own dashboard on a personal fork:
+#   curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+#     | sudo SG_NODE_ID=web-01 \
+#       SG_REPO=yourname/scanguard \
+#       SG_GITHUB_TOKEN=*** bash
+#
+# To opt out of community reporting (local blocking only):
+#   curl -fsSL .../install.sh | sudo SG_COMMUNITY_ENABLED=0 bash
+#
+# All env vars are optional.
 # =============================================================================
 
 set -euo pipefail
@@ -33,7 +27,14 @@ REPO="${SG_REPO:-hezhidong/scanguard}"
 BRANCH="${SG_BRANCH:-master}"
 NODE_ID="${SG_NODE_ID:-$(hostname)}"
 NODE_NAME="${SG_NODE_NAME:-$NODE_ID}"
-GITHUB_TOKEN="${SG_GITHUB_TOKEN:-}"
+
+# Community endpoint (public intake, no token required)
+COMMUNITY_ENABLED="${SG_COMMUNITY_ENABLED:-1}"
+COMMUNITY_ENDPOINT="${SG_COMMUNITY_ENDPOINT:-https://scanguard-intake.hezhidong.workers.dev/report}"
+
+# Optional GitHub PAT (only needed if user wants to push to their own fork)
+GITHUB_TOKEN="${SG_G…N:-}"
+
 FIREWALL_BACKEND="${SG_FIREWALL:-iptables}"
 LOG_PATHS_CSV="${SG_LOG_PATHS:-/var/log/nginx/access.log,/var/log/nginx/access.log.1}"
 WHITELIST_CSV="${SG_WHITELIST:-127.0.0.1,::1}"
@@ -47,7 +48,7 @@ CONFIG_FILE="$CONFIG_DIR/config.yaml"
 SERVICE_FILE=/etc/systemd/system/scanguard.service
 TIMER_FILE=/etc/systemd/system/scanguard.timer
 
-c_green=$'\033[0;32m'; c_yellow=$'\033[0;33m'; c_red=$'\033[0;31m'; c_off=$'\033[0m'
+c_green=$'\033[0;32m'; c_yellow=$'\033[0;33m'; c_red=$'\033[0;31m'; c_cyan=$'\033[0;36m'; c_off=$'\033[0m'
 info()  { printf "%s[+]%s %s\n" "$c_green" "$c_off" "$*"; }
 warn()  { printf "%s[!]%s %s\n" "$c_yellow" "$c_off" "$*"; }
 error() { printf "%s[x]%s %s\n" "$c_red" "$c_off" "$*" >&2; }
@@ -59,7 +60,6 @@ for cmd in python3 curl tar; do
   command -v "$cmd" >/dev/null 2>&1 || die "Missing dependency: $cmd"
 done
 
-# Detect pip
 PIP=""
 for candidate in pip3 pip; do
   if command -v "$candidate" >/dev/null 2>&1; then PIP="$candidate"; break; fi
@@ -94,26 +94,25 @@ chmod -R a+rX "$INSTALL_DIR"
 info "Installing Python dependencies..."
 $PIP install -q -r "$INSTALL_DIR/requirements.txt"
 
-# ── 3. Config dir + GitHub token ──────────────────────────────────────────
+# ── 3. Config dir + optional token ────────────────────────────────────────
 info "Creating $CONFIG_DIR and $STATE_DIR ..."
 mkdir -p "$CONFIG_DIR" "$STATE_DIR"
 chmod 700 "$CONFIG_DIR"
 
-if [[ -z "$GITHUB_TOKEN" ]]; then
-  if [[ -f "$TOKEN_FILE" && -s "$TOKEN_FILE" ]]; then
-    GITHUB_TOKEN="$(cat "$TOKEN_FILE")"
-    info "Reusing existing token from $TOKEN_FILE"
-  else
-    printf "%s[?]%s Paste your GitHub fine-grained PAT (Contents: Read&write on %s): " \
-           "$c_yellow" "$c_off" "$REPO"
-    read -rs GITHUB_TOKEN
-    echo
-    [[ -n "$GITHUB_TOKEN" ]] || die "No token provided."
-  fi
+# GitHub token is OPTIONAL — only needed when central.enabled=true (self-hosted fork).
+# If SG_GITHUB_TOKEN was provided, save it. If an existing token file exists, reuse it.
+# Otherwise central reporting is disabled and only community reporting is used.
+if [[ -n "$GITHUB_TOKEN" ]]; then
+  printf '%s' "$GITHUB_TOKEN" > "$TOKEN_FILE"
+  chmod 600 "$TOKEN_FILE"
+  info "GitHub token saved to $TOKEN_FILE (for self-hosted fork reporting)"
+elif [[ -f "$TOKEN_FILE" && -s "$TOKEN_FILE" ]]; then
+  info "Reusing existing token from $TOKEN_FILE"
+  GITHUB_TOKEN="$(cat "$TOKEN_FILE")"
+else
+  info "No GitHub token provided — community reporting is enabled, self-hosted fork is off."
+  info "  (Set SG_GITHUB_TOKEN later if you want your own dashboard.)"
 fi
-printf '%s' "$GITHUB_TOKEN" > "$TOKEN_FILE"
-chmod 600 "$TOKEN_FILE"
-info "Token saved to $TOKEN_FILE"
 
 # ── 4. Generate config.yaml ───────────────────────────────────────────────
 csv_to_yaml_list() {
@@ -126,6 +125,30 @@ csv_to_yaml_list() {
 }
 LOG_LIST="$(csv_to_yaml_list "$LOG_PATHS_CSV" '      ')"
 WHITE_LIST="$(csv_to_yaml_list "$WHITELIST_CSV" '  ')"
+
+if [[ "$COMMUNITY_ENABLED" == "1" ]]; then
+  COMMUNITY_BLOCK="community:
+  enabled: true
+  endpoint: $COMMUNITY_ENDPOINT
+  node_id: $NODE_ID
+  node_name: $NODE_NAME"
+else
+  COMMUNITY_BLOCK="community:
+  enabled: false"
+fi
+
+if [[ -n "$GITHUB_TOKEN" ]]; then
+  CENTRAL_BLOCK="central:
+  enabled: true
+  backend: github
+  repo: $REPO
+  branch: $BRANCH
+  node_id: $NODE_ID
+  node_name: $NODE_NAME"
+else
+  CENTRAL_BLOCK="central:
+  enabled: false"
+fi
 
 info "Writing $CONFIG_FILE ..."
 cat > "$CONFIG_FILE" <<YAML
@@ -170,13 +193,9 @@ firewall:
   chain: INPUT
   persistent: true
 
-central:
-  enabled: true
-  backend: github
-  repo: $REPO
-  branch: $BRANCH
-  node_id: $NODE_ID
-  node_name: $NODE_NAME
+$COMMUNITY_BLOCK
+
+$CENTRAL_BLOCK
 YAML
 chmod 640 "$CONFIG_FILE"
 
@@ -239,7 +258,9 @@ ${c_green} ScanGuard agent installed successfully.${c_off}
   Config      : $CONFIG_FILE
   State       : $STATE_DIR
   Node ID     : $NODE_ID  ($NODE_NAME)
-  Repo        : $REPO ($BRANCH)
+
+  ${c_cyan}Community reporting${c_off}: $([[ "$COMMUNITY_ENABLED" == "1" ]] && echo "${c_green}ON${c_off}  -> $COMMUNITY_ENDPOINT" || echo "${c_yellow}OFF${c_off}")
+  ${c_cyan}Self-hosted fork${c_off}:    $([[ -n "$GITHUB_TOKEN" ]] && echo "${c_green}ON${c_off}  -> $REPO" || echo "${c_yellow}OFF (no token)${c_off}")
 
  Useful commands:
    systemctl status scanguard.timer
@@ -248,6 +269,6 @@ ${c_green} ScanGuard agent installed successfully.${c_off}
    cd $INSTALL_DIR && sudo python3 -m scanguard -c $CONFIG_FILE --dry-run --print
    cd $INSTALL_DIR && sudo python3 -m scanguard -c $CONFIG_FILE --print
 
- Dashboard: https://${OWNER}.github.io/${SHORT_REPO}/
+ Community dashboard: https://${OWNER}.github.io/${SHORT_REPO}/
 ${c_green}========================================================${c_off}
 EOF
