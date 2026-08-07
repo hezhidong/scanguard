@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T16:32:27+00:00",
+  "generated_at": "2026-08-07T17:29:19+00:00",
   "total_ips": 84,
   "events": 96,
   "nodes": 3,
@@ -8,6 +8,8 @@
     "ai-agent-do-nyc",
     "ai-agent-stockweb"
   ],
+  "blocklist_count": 84,
+  "pending_count": 0,
   "by_severity": {
     "critical": 0,
     "high": 84,
