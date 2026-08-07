@@ -1,0 +1,20 @@
+name = "scanguard-intake"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Trigger flush every minute
+[triggers]
+crons = ["* * * * *"]
+
+# KV namespace — create with:
+#   wrangler kv:namespace create EVENTS
+# then paste the id below.
+[[kv_namespaces]]
+binding = "EVENTS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Repository config is non-secret and can live here.
+[vars]
+GITHUB_REPO = "hezhidong/scanguard"
+GITHUB_BRANCH = "master"
+GITHUB_PATH = "reports/community.jsonl"
