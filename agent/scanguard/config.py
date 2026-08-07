@@ -63,11 +63,13 @@ class FirewallConfig:
 
 @dataclass
 class CentralConfig:
-    """Report blocked IPs to a Central Threat Intel API.
+    """Report blocked IPs to a self-owned fork (GitHub or legacy HTTP API).
+
+    Use this when the node operator wants to run their own dashboard.
+    For the public community feed, use CommunityConfig instead.
 
     backend: http      — POST to {url}/api/report with a Bearer token (legacy)
-    backend: github    — append to a public GitHub repo via the Contents API;
-                         a GitHub Actions workflow aggregates the blocklist.
+    backend: github    — append to a public GitHub repo via the Contents API.
     """
     enabled: bool = False
     backend: str = "http"             # http | github
@@ -83,6 +85,21 @@ class CentralConfig:
 
 
 @dataclass
+class CommunityConfig:
+    """Report blocked IPs to the public ScanGuard community intake (no token).
+
+    The endpoint is a Cloudflare Worker that validates, rate-limits and
+    buffers events before committing them to the central repository.
+    Defaults are set so a fresh install contributes with zero configuration.
+    """
+    enabled: bool = True
+    endpoint: str = "https://scanguard-intake.hezhidong.workers.dev/report"
+    node_id: Optional[str] = None     # defaults to hostname
+    node_name: Optional[str] = None   # defaults to hostname
+    timeout: int = 10
+
+
+@dataclass
 class AgentConfig:
     state_dir: Path
     log_sources: List[LogSource] = field(default_factory=list)
@@ -90,6 +107,7 @@ class AgentConfig:
     firewall: FirewallConfig = field(default_factory=FirewallConfig)
     whitelist: List[str] = field(default_factory=list)
     central: CentralConfig = field(default_factory=CentralConfig)
+    community: CommunityConfig = field(default_factory=CommunityConfig)
     geo_provider: str = "ip-api"   # ip-api | none
     geo_cache_ttl_days: int = 7
     notify_file: Optional[str] = None
@@ -106,6 +124,7 @@ class AgentConfig:
             firewall=FirewallConfig(**fw),
             whitelist=list(data.get("whitelist", [])),
             central=CentralConfig(**(data.get("central", {}) or {})),
+            community=CommunityConfig(**(data.get("community", {}) or {})),
             geo_provider=data.get("geo", {}).get("provider", "ip-api"),
             geo_cache_ttl_days=data.get("geo", {}).get("cache_ttl_days", 7),
             notify_file=data.get("notify_file"),
