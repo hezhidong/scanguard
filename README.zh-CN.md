@@ -41,11 +41,13 @@ curl -s https://hezhidong.github.io/scanguard/blocklist.iptables | sudo iptables
 ```
 scanguard/
 ├── agent/        # ScanGuard Agent — 日志检测 + 自动封禁（部署在每台主机上）
-├── api/          # 可选的自托管 FastAPI 中心服务（旧方案，GitHub 模式不需要）
+├── intake/       # Cloudflare Worker — 公共社区上报入口
+├── api/          # 可选的自托管 FastAPI 中心服务（旧方案）
 ├── web/          # 静态仪表盘（由 Actions 构建到仓库根目录，通过 Pages 提供服务）
 ├── scripts/      # aggregate.py（CI：reports/* → blocklist + stats）
-├── reports/      # 各节点的 jsonl 事件文件（由 agent 提交）
-├── install.sh    # 一键安装脚本（见下方快速开始）
+├── reports/      # 各节点 + 社区 jsonl 事件文件
+├── docs/         # 运营文档（intake 部署等）
+├── install.sh    # 一键安装脚本
 └── .github/workflows/aggregate.yml
 ```
 
@@ -118,6 +120,56 @@ curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.
 
 > **隐私说明：** 上报内容只包含 IP / 规则 / 严重级别 / 命中次数 / 归属地 /
 > 节点元数据，不会发送完整 URL、查询字符串或请求证据。
+
+### 社区上报（默认开启）
+
+Agent 每次封禁 IP 时，会同时把一条**脱敏后的事件**发送到 ScanGuard 公共入口
+（一个 Cloudflare Worker）：
+
+```
+POST https://scanguard-intake.hezhidong.workers.dev/report
+```
+
+Worker 会做校验、限流，然后把事件追加到本仓库的
+`reports/community.jsonl`。**不需要任何账号或 token。**
+
+**上报内容：** IP、规则名、严重级别、命中次数、国家/城市/ISP，以及你的
+`node_id` / `node_name`。**不会**上传 URL、查询字符串、User-Agent 或请求体。
+
+**防投毒机制：** 来自社区节点的 IP，必须被**至少 2 个不同的 node_id** 上报后，
+才会进入公共黑名单。单节点上报的 IP 会在仪表盘中标记为"待确认（pending）"，
+但不会通过 `blocklist.*` 分发。来自运营方自有节点（通过 `central:` 直接推送到
+GitHub）的上报不受此限制。
+
+如需关闭，在 `config.yaml` 中设置：
+
+```yaml
+community:
+  enabled: false
+```
+
+或者安装时加上 `SG_COMMUNITY_ENABLED=0`。
+
+### 运行自己的仪表盘（可选）
+
+如果你想在贡献社区的同时，也拥有自己的私有仪表盘：
+
+1. Fork 本仓库
+2. 在 fork 上启用 GitHub Pages（Settings → Pages → master / root）
+3. 创建一个仅对你 fork 有 Contents: Read&write 权限的 fine-grained PAT
+4. 安装时这样运行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_REPO=yourname/scanguard \
+       SG_GITHUB_TOKEN=*** bash
+```
+
+你的 agent 会同时推送到社区 feed（默认开）和你自己的 fork（提供了 token 时）。
+设置 `community.enabled: false` 可完全私有化。
+
+如果你想**自建 intake 入口**而不是使用公共服务，参见
+[`docs/INTAKE_DEPLOY.md`](docs/INTAKE_DEPLOY.md)。
 
 ### 手动安装（如果你希望自己一步步来）
 
