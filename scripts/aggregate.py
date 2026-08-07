@@ -63,6 +63,8 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
         rank = SEV_RANK.get(sev, 2)
         ts = e.get("ts") or ""
         node = e.get("node_id") or ""
+        source = (e.get("source") or e.get("source_kind") or "").lower()
+        is_community = source == "community"
         if node:
             nodes.add(node)
 
@@ -77,6 +79,8 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
                 "rules": set(),
                 "rule_hits": Counter(),
                 "nodes": set(),
+                "community_nodes": set(),
+                "has_trusted_report": False,
                 "first_seen": ts,
                 "last_seen": ts,
                 "country": e.get("country", ""),
@@ -92,6 +96,10 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
         rec["rule_hits"][e.get("rule", "")] += int(e.get("hits", 1))
         if node:
             rec["nodes"].add(node)
+            if is_community:
+                rec["community_nodes"].add(node)
+        if not is_community:
+            rec["has_trusted_report"] = True
         if rank > rec["max_sev_rank"]:
             rec["max_sev_rank"] = rank
             rec["max_severity"] = sev
@@ -110,12 +118,13 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
             "hit_count": int(e.get("hits", 1)),
             "node_id": node,
             "node_name": e.get("node_name", ""),
-            "source_kind": e.get("source_kind", ""),
+            "source_kind": e.get("source_kind") or e.get("source", ""),
         })
 
     # finalize
     threats = []
     blocklist_ips = []
+    pending_ips = []  # community-sourced, single-node (observation only)
     for ip, rec in by_ip.items():
         rec["distinct_nodes"] = len(rec["nodes"])
         rec["rules"] = sorted(r for r in rec["rules"] if r)
@@ -127,12 +136,22 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
             country_counter[rec["country"]] += 1
         for r in rec["rules"]:
             rule_counter[r] += 1
-        # public-safe dict (drop internal sets/counters)
+
+        # Blocklist eligibility:
+        #   - any report from a trusted (non-community) source, OR
+        #   - severity >= high AND at least 2 distinct community nodes
+        # Single-node community reports stay in threats.json but are NOT
+        # added to the public blocklist (anti-poisoning).
+        community_confirmed = len(rec["community_nodes"]) >= 2
+        eligible = rec["has_trusted_report"] or community_confirmed
+
         threats.append({
             "ip": ip,
             "max_severity": rec["max_severity"],
             "total_hits": rec["total_hits"],
             "distinct_nodes": rec["distinct_nodes"],
+            "community_nodes": len(rec["community_nodes"]),
+            "trusted": rec["has_trusted_report"],
             "rules": rec["rules"],
             "first_seen": rec["first_seen"],
             "last_seen": rec["last_seen"],
@@ -143,7 +162,10 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
             "events": rec["events"],
         })
         if rec["max_sev_rank"] >= min_severity_rank:
-            blocklist_ips.append((ip, rec["country"], rec["isp"]))
+            if eligible:
+                blocklist_ips.append((ip, rec["country"], rec["isp"]))
+            else:
+                pending_ips.append((ip, rec["country"], rec["isp"]))
 
     threats.sort(key=lambda x: (SEV_RANK.get(x["max_severity"], 0),
                                 x["total_hits"]), reverse=True)
@@ -155,6 +177,8 @@ def aggregate(events, min_severity_rank=3, per_ip_event_cap=20):
         "events": len(events),
         "nodes": len(nodes),
         "node_ids": sorted(nodes),
+        "blocklist_count": len(blocklist_ips),
+        "pending_count": len(pending_ips),
         "by_severity": {
             "critical": sev_counter.get("critical", 0),
             "high": sev_counter.get("high", 0),
@@ -240,7 +264,8 @@ def main():
                 shutil.copy2(item, OUT / item.name)
 
     print(f"Aggregated {len(events)} events → {len(threats)} IPs "
-          f"({len(blocklist_ips)} in blocklist) across {stats['nodes']} node(s)")
+          f"({len(blocklist_ips)} in blocklist, {stats['pending_count']} pending) "
+          f"across {stats['nodes']} node(s)")
 
 
 if __name__ == "__main__":
