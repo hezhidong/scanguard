@@ -43,11 +43,13 @@ curl -s https://hezhidong.github.io/scanguard/blocklist.iptables | sudo iptables
 ```
 scanguard/
 ├── agent/        # ScanGuard Agent — log detection + auto-block (runs on each host)
-├── api/          # Optional self-hosted FastAPI central (legacy, not needed for GitHub mode)
+├── intake/       # Cloudflare Worker — public community intake endpoint
+├── api/          # Optional self-hosted FastAPI central (legacy)
 ├── web/          # Static dashboard (built to repo root by Actions, served via Pages)
 ├── scripts/      # aggregate.py (CI: reports/* → blocklist + stats)
-├── reports/      # Per-node jsonl event files (committed by agents)
-├── install.sh    # One-shot agent installer (see Quick Start below)
+├── reports/      # Per-node + community jsonl event files
+├── docs/         # Operator docs (intake deployment, etc.)
+├── install.sh    # One-shot agent installer
 └── .github/workflows/aggregate.yml
 ```
 
@@ -120,6 +122,59 @@ curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.
 
 > **Privacy:** reports contain only IP / rule / severity / hit count / geo /
 > node metadata. No full URLs, query strings, or request evidence are uploaded.
+
+### Community reporting (on by default)
+
+Every time the agent blocks an IP, it also sends a **sanitized event** to the
+public ScanGuard intake endpoint (a Cloudflare Worker):
+
+```
+POST https://scanguard-intake.hezhidong.workers.dev/report
+```
+
+The worker validates, rate-limits, and appends events to
+`reports/community.jsonl` in this repo. No account or token is required.
+
+**What gets sent:** IP address, rule name, severity, hit count, country/city/ISP,
+and your `node_id` / `node_name`. No URLs, query strings, user agents, or request
+bodies are ever uploaded.
+
+**Anti-poisoning:** IPs reported by community nodes only enter the public
+blocklist after **at least 2 distinct node IDs** report them. Single-node
+reports are listed in the dashboard as "pending" but are not distributed via
+`blocklist.*`. Reports from the operator's own nodes (direct GitHub push via
+`central:`) bypass this rule.
+
+To opt out, set in `config.yaml`:
+
+```yaml
+community:
+  enabled: false
+```
+
+Or install with `SG_COMMUNITY_ENABLED=0`.
+
+### Running your own dashboard (optional)
+
+If you want a private dashboard in addition to (or instead of) contributing to
+the community feed:
+
+1. Fork this repo
+2. Enable GitHub Pages on your fork (Settings → Pages → master / root)
+3. Create a fine-grained PAT with Contents: Read&write on **your fork**
+4. Install with:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hezhidong/scanguard/master/install.sh \
+  | sudo SG_REPO=yourname/scanguard \
+       SG_GITHUB_TOKEN=*** bash
+```
+
+Your agent will push to both the community feed (default on) and your own fork
+(if a token is provided). Set `community.enabled: false` to go fully private.
+
+See [`docs/INTAKE_DEPLOY.md`](docs/INTAKE_DEPLOY.md) if you want to **host your
+own intake endpoint** instead of using the public one.
 
 ### Manual install (if you prefer to do it by hand)
 
