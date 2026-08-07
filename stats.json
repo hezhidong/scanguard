@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-07T13:41:47+00:00",
-  "total_ips": 82,
-  "events": 94,
+  "generated_at": "2026-08-07T14:30:29+00:00",
+  "total_ips": 83,
+  "events": 95,
   "nodes": 3,
   "node_ids": [
     "ai-agent-baseball",
@@ -10,7 +10,7 @@
   ],
   "by_severity": {
     "critical": 0,
-    "high": 82,
+    "high": 83,
     "medium": 0,
     "low": 0
   },
@@ -59,7 +59,7 @@
   "top_rules": [
     [
       "nginx-php-scanner",
-      82
+      83
     ]
   ]
 }
