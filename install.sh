@@ -213,7 +213,7 @@ TIMER
   systemctl daemon-reload
   systemctl enable --now scanguard.timer
   info "Timer enabled. Upcoming runs:"
-  systemctl list-timers --no-pager scanguard.timer | head -3 || true
+  systemctl list-timers --no-pager scanguard.timer 2>/dev/null | head -3 || true
 else
   warn "Skipping systemd. For periodic runs, add a cron entry:"
   echo "  */30 * * * * root cd $INSTALL_DIR && /usr/bin/python3 -m scanguard -c $CONFIG_FILE"
