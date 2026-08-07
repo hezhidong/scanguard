@@ -1,1 +1,0 @@
-{"city": "Testville", "country": "Test", "hits": 42, "ip": "192.0.2.1", "isp": "Example ISP", "node_id": "ai-agent", "node_name": "ai-agent (PHP Scanner Catcher)", "org": "Example", "rule": "nginx-php-scanner", "severity": "high", "source_kind": "nginx", "ts": "2026-08-07T08:00:00+00:00"}
