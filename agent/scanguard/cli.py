@@ -14,7 +14,12 @@ from .config import AgentConfig
 from .detector import scan
 from .firewall import get_backend
 from .geo import lookup as geo_lookup
-from .reporter import report as central_report, report_github, _sanitize_event
+from .reporter import (
+    report as central_report,
+    report_community,
+    report_github,
+    _sanitize_event,
+)
 from .state import StateStore
 
 
@@ -32,6 +37,7 @@ def run(config: AgentConfig) -> dict:
     results = []
     new_blocked = []
     gh_events = []
+    community_events = []
     outbox = config.state_dir / "github-outbox.jsonl"
     for hit in hits:
         if hit.ip in already:
@@ -69,6 +75,14 @@ def run(config: AgentConfig) -> dict:
                 else:
                     central_report(config.central, hit.ip, hit.rule, hit.severity,
                                    hit.count, hit.evidence, hit.source, geo)
+            # Community feed (default on, no token)
+            if config.community.enabled:
+                community_events.append(_sanitize_event(
+                    hit.ip, hit.rule, hit.severity, hit.count, hit.source,
+                    geo,
+                    config.community.node_id or platform.node(),
+                    config.community.node_name or config.community.node_id or platform.node(),
+                ))
         results.append({"ip": hit.ip, "rule": hit.rule, "status": status,
                         "already": br.already_blocked, "error": br.error,
                         "count": hit.count, "geo": geo})
@@ -107,6 +121,10 @@ def run(config: AgentConfig) -> dict:
                     print(f"[scanguard] WARN: github report failed "
                           f"({len(pending)} event(s) queued in {outbox})",
                           file=sys.stderr)
+
+    # Community report — fire and forget; must never break local operation.
+    if community_events:
+        report_community(config.community, community_events)
 
     state.append_stats({
         "ts": datetime.now(timezone.utc).isoformat(),
