@@ -1,0 +1,14 @@
+{
+  "name": "scanguard-intake",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ScanGuard community intake — Cloudflare Worker that accepts scanner events and appends them to a public GitHub repo.",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
