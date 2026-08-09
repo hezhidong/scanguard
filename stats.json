@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-08-09T05:36:02+00:00",
-  "total_ips": 93,
-  "events": 108,
+  "generated_at": "2026-08-09T06:17:45+00:00",
+  "total_ips": 94,
+  "events": 109,
   "nodes": 3,
   "node_ids": [
     "ai-agent-baseball",
     "ai-agent-do-nyc",
     "ai-agent-stockweb"
   ],
-  "blocklist_count": 93,
+  "blocklist_count": 94,
   "pending_count": 0,
   "by_severity": {
     "critical": 0,
-    "high": 93,
+    "high": 94,
     "medium": 0,
     "low": 0
   },
@@ -61,7 +61,7 @@
   "top_rules": [
     [
       "nginx-php-scanner",
-      93
+      94
     ]
   ]
 }
