@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-09T04:41:06+00:00
-# Entries: 92
+# Generated: 2026-08-09T04:46:40+00:00
+# Entries: 93
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -9,6 +9,7 @@
 -A INPUT -s 4.223.140.16 -j DROP  # Sweden Microsoft Corporation
 -A INPUT -s 4.225.166.222 -j DROP  # Sweden Microsoft Corporation
 -A INPUT -s 4.225.203.22 -j DROP  # Sweden Microsoft Corporation
+-A INPUT -s 4.232.93.83 -j DROP  # Italy Microsoft Corporation
 -A INPUT -s 4.232.147.36 -j DROP  # Italy Microsoft Corporation
 -A INPUT -s 4.232.185.206 -j DROP  # Italy Microsoft Corporation
 -A INPUT -s 4.232.188.49 -j DROP  # Italy Microsoft Corporation
