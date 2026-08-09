@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-09T14:05:22+00:00
-# Entries: 98
+# Generated: 2026-08-09T14:21:34+00:00
+# Entries: 99
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -75,6 +75,7 @@
 -A INPUT -s 106.15.236.209 -j DROP  # China Hangzhou Alibaba Advertising Co
 -A INPUT -s 107.175.227.45 -j DROP  # United States HostPapa
 -A INPUT -s 116.62.163.56 -j DROP  # China CNC Group CHINA169 Fujian Province Network
+-A INPUT -s 121.40.20.65 -j DROP  # China Hangzhou Alibaba Advertising Co., Ltd.
 -A INPUT -s 136.109.11.44 -j DROP  # United States Google LLC
 -A INPUT -s 136.124.35.245 -j DROP  # United States Google LLC
 -A INPUT -s 139.162.119.146 -j DROP  # Japan Akamai Technologies, Inc.
