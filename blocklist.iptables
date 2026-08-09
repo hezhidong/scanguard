@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-09T12:17:55+00:00
-# Entries: 96
+# Generated: 2026-08-09T12:51:20+00:00
+# Entries: 97
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -90,6 +90,7 @@
 -A INPUT -s 172.213.17.107 -j DROP  # Italy Microsoft Corporation
 -A INPUT -s 172.213.153.79 -j DROP  # Italy Microsoft Corporation
 -A INPUT -s 172.213.208.13 -j DROP  # Italy Microsoft Corporation
+-A INPUT -s 175.119.225.92 -j DROP  # South Korea SK Broadband Co Ltd
 -A INPUT -s 185.14.47.162 -j DROP  # Hong Kong G-Core Labs S.A.
 -A INPUT -s 185.65.202.199 -j DROP  # Germany Baykov Ilya Sergeevich
 -A INPUT -s 192.255.141.70 -j DROP  # United States HostPapa
