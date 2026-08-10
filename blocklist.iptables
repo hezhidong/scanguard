@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-10T02:29:48+00:00
-# Entries: 102
+# Generated: 2026-08-10T03:57:18+00:00
+# Entries: 103
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -49,6 +49,7 @@
 -A INPUT -s 24.228.142.216 -j DROP  # United States Cablevision Systems Corp.
 -A INPUT -s 34.34.229.14 -j DROP  # United States Google LLC
 -A INPUT -s 34.34.229.102 -j DROP  # United States Google LLC
+-A INPUT -s 34.56.151.211 -j DROP  # United States Google LLC
 -A INPUT -s 34.87.30.115 -j DROP  # Singapore Google LLC
 -A INPUT -s 34.96.45.146 -j DROP  # United States Google LLC
 -A INPUT -s 34.96.48.119 -j DROP  # Singapore Google LLC
