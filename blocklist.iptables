@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-11T11:26:10+00:00
-# Entries: 112
+# Generated: 2026-08-11T11:42:23+00:00
+# Entries: 113
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -81,6 +81,7 @@
 -A INPUT -s 80.94.95.211 -j DROP  # Hungary SS-Net
 -A INPUT -s 81.226.129.67 -j DROP  # Sweden Telia Company AB
 -A INPUT -s 101.36.104.242 -j DROP  # Japan UCLOUD INFORMATION TECHNOLOGY (HK) LIMITED
+-A INPUT -s 101.47.8.187 -j DROP  # Singapore Byteplus Pte. Ltd.
 -A INPUT -s 101.47.50.15 -j DROP  # Singapore Byteplus Pte. Ltd.
 -A INPUT -s 106.15.236.209 -j DROP  # China Hangzhou Alibaba Advertising Co
 -A INPUT -s 107.175.227.45 -j DROP  # United States HostPapa
