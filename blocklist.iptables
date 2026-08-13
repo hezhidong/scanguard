@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-12T23:39:22+00:00
-# Entries: 123
+# Generated: 2026-08-13T00:00:11+00:00
+# Entries: 124
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -82,6 +82,7 @@
 -A INPUT -s 74.248.24.145 -j DROP  # Poland Microsoft Corporation
 -A INPUT -s 74.248.35.25 -j DROP  # Poland Microsoft Corporation
 -A INPUT -s 74.248.96.101 -j DROP  # Poland Microsoft Corporation
+-A INPUT -s 74.248.115.87 -j DROP  # Poland Microsoft Corporation
 -A INPUT -s 80.94.95.211 -j DROP  # Hungary SS-Net
 -A INPUT -s 81.226.129.67 -j DROP  # Sweden Telia Company AB
 -A INPUT -s 87.192.253.110 -j DROP  # Uzbekistan "Uzbektelekom" Joint Stock Company
