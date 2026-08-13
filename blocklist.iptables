@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-13T20:57:52+00:00
-# Entries: 132
+# Generated: 2026-08-13T21:38:41+00:00
+# Entries: 133
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -82,6 +82,7 @@
 -A INPUT -s 54.237.234.26 -j DROP  # United States Amazon.com, Inc.
 -A INPUT -s 68.221.69.10 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 68.221.69.72 -j DROP  # Spain Microsoft Corporation
+-A INPUT -s 68.221.73.131 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 72.146.20.230 -j DROP  # Italy BellSouth.net Inc.
 -A INPUT -s 72.146.33.199 -j DROP  # Italy BellSouth.net Inc.
 -A INPUT -s 74.248.24.145 -j DROP  # Poland Microsoft Corporation
