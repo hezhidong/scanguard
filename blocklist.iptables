@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-13T12:29:18+00:00
-# Entries: 127
+# Generated: 2026-08-13T13:35:19+00:00
+# Entries: 128
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -112,6 +112,7 @@
 -A INPUT -s 163.7.12.173 -j DROP  # Indonesia Byteplus Pte. Ltd.
 -A INPUT -s 165.22.217.106 -j DROP  # India DigitalOcean, LLC
 -A INPUT -s 167.233.235.159 -j DROP  # Germany Hetzner Online GmbH
+-A INPUT -s 169.58.11.62 -j DROP  # France Contabo GmbH
 -A INPUT -s 172.161.1.105 -j DROP  # Switzerland Microsoft
 -A INPUT -s 172.202.95.21 -j DROP  # United States Microsoft
 -A INPUT -s 172.213.8.106 -j DROP  # Italy Microsoft Corporation
