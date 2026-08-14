@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-14T20:04:59+00:00
-# Entries: 140
+# Generated: 2026-08-14T20:20:11+00:00
+# Entries: 141
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -136,6 +136,7 @@
 -A INPUT -s 185.65.202.199 -j DROP  # Germany Baykov Ilya Sergeevich
 -A INPUT -s 185.177.72.70 -j DROP  # France Bucklog SARL
 -A INPUT -s 185.242.3.85 -j DROP  # Germany Netiface America, Inc.
+-A INPUT -s 191.237.254.161 -j DROP  # Brazil Microsoft Corporation
 -A INPUT -s 192.255.141.70 -j DROP  # United States HostPapa
 -A INPUT -s 194.180.49.37 -j DROP  # Germany MEVSPACE sp. z o.o.
 -A INPUT -s 195.161.62.64 -j DROP  # Russia JSC RTComm.RU
