@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-14T22:18:02+00:00
-# Entries: 141
+# Generated: 2026-08-14T22:20:49+00:00
+# Entries: 142
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -140,6 +140,7 @@
 -A INPUT -s 192.255.141.70 -j DROP  # United States HostPapa
 -A INPUT -s 194.180.49.37 -j DROP  # Germany MEVSPACE sp. z o.o.
 -A INPUT -s 195.161.62.64 -j DROP  # Russia JSC RTComm.RU
+-A INPUT -s 202.166.198.121 -j DROP  # Nepal WorldLink Communications
 -A INPUT -s 210.211.122.97 -j DROP  # Vietnam VTDC
 -A INPUT -s 213.209.159.154 -j DROP  # Germany Feo Prest SRL
 -A INPUT -s 216.126.239.78 -j DROP  # United States RouterHosting LLC
