@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-15T18:21:19+00:00
-# Entries: 151
+# Generated: 2026-08-15T18:27:38+00:00
+# Entries: 153
 
 *filter
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
@@ -80,6 +80,7 @@
 -A INPUT -s 34.140.61.9 -j DROP  # Belgium Google LLC
 -A INPUT -s 35.195.56.244 -j DROP  # Belgium Google LLC
 -A INPUT -s 35.228.195.197 -j DROP  # Finland Google LLC
+-A INPUT -s 35.241.159.95 -j DROP  # Belgium Google LLC
 -A INPUT -s 43.155.172.154 -j DROP  # South Korea Shenzhen Tencent Computer Systems Company Limited
 -A INPUT -s 43.156.109.74 -j DROP  # Singapore Shenzhen Tencent Computer Systems Company Limited
 -A INPUT -s 43.167.166.10 -j DROP  # Japan Shenzhen Tencent Computer Systems Company Limited
@@ -89,6 +90,7 @@
 -A INPUT -s 51.120.76.82 -j DROP  # Norway Microsoft
 -A INPUT -s 51.120.79.193 -j DROP  # Norway Microsoft
 -A INPUT -s 52.165.196.84 -j DROP  # United States Microsoft Corporation
+-A INPUT -s 52.238.210.254 -j DROP  # United States Microsoft Corporation
 -A INPUT -s 54.237.234.26 -j DROP  # United States Amazon.com, Inc.
 -A INPUT -s 68.155.156.252 -j DROP  #
 -A INPUT -s 68.221.69.10 -j DROP  # Spain Microsoft Corporation
