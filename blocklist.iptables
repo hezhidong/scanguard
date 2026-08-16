@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-16T17:54:08+00:00
-# Entries: 169
+# Generated: 2026-08-16T18:09:08+00:00
+# Entries: 170
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -161,6 +161,7 @@
 -A INPUT -s 175.119.225.92 -j DROP  # South Korea SK Broadband Co Ltd
 -A INPUT -s 185.14.47.162 -j DROP  # Hong Kong G-Core Labs S.A.
 -A INPUT -s 185.65.202.199 -j DROP  # Germany Baykov Ilya Sergeevich
+-A INPUT -s 185.177.72.68 -j DROP  # France Bucklog SARL
 -A INPUT -s 185.177.72.70 -j DROP  # France Bucklog SARL
 -A INPUT -s 185.242.3.85 -j DROP  # Germany Netiface America, Inc.
 -A INPUT -s 191.237.254.161 -j DROP  # Brazil Microsoft Corporation
