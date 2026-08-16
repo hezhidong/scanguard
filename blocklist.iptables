@@ -1,12 +1,13 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-16T08:55:43+00:00
-# Entries: 160
+# Generated: 2026-08-16T09:05:37+00:00
+# Entries: 163
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
 -A INPUT -s 2.27.131.86 -j DROP  # Kazakhstan Megahost Kazakhstan TOO
 -A INPUT -s 4.184.185.91 -j DROP  # Germany Microsoft Corporation
 -A INPUT -s 4.184.238.149 -j DROP  # Germany Microsoft Corporation
+-A INPUT -s 4.204.200.143 -j DROP  # Canada Microsoft Corporation
 -A INPUT -s 4.223.71.149 -j DROP  # Sweden Microsoft Corporation
 -A INPUT -s 4.223.73.90 -j DROP  # Sweden Microsoft Corporation
 -A INPUT -s 4.223.140.16 -j DROP  # Sweden Microsoft Corporation
@@ -37,6 +38,8 @@
 -A INPUT -s 20.100.201.54 -j DROP  # Norway Microsoft Corporation
 -A INPUT -s 20.104.16.169 -j DROP  # Canada Microsoft Corporation
 -A INPUT -s 20.104.22.47 -j DROP  # Canada Microsoft Corporation
+-A INPUT -s 20.104.49.167 -j DROP  # Canada Microsoft Corporation
+-A INPUT -s 20.104.100.201 -j DROP  # Canada Microsoft Corporation
 -A INPUT -s 20.113.56.22 -j DROP  # Germany Microsoft Corporation
 -A INPUT -s 20.113.142.140 -j DROP  #
 -A INPUT -s 20.125.96.254 -j DROP  # United States Microsoft Corporation
