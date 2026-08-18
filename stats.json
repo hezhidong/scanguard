@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-08-18T01:22:27+00:00",
-  "total_ips": 186,
-  "events": 216,
+  "generated_at": "2026-08-18T01:52:34+00:00",
+  "total_ips": 187,
+  "events": 217,
   "nodes": 3,
   "node_ids": [
     "ai-agent-baseball",
     "ai-agent-do-nyc",
     "ai-agent-stockweb"
   ],
-  "blocklist_count": 186,
+  "blocklist_count": 187,
   "pending_count": 0,
   "by_severity": {
     "critical": 0,
-    "high": 186,
+    "high": 187,
     "medium": 0,
     "low": 0
   },
@@ -46,22 +46,22 @@
       9
     ],
     [
+      "Singapore",
+      9
+    ],
+    [
       "Norway",
       8
     ],
     [
       "Poland",
       8
-    ],
-    [
-      "Singapore",
-      8
     ]
   ],
   "top_rules": [
     [
       "nginx-php-scanner",
-      186
+      187
     ]
   ]
 }
