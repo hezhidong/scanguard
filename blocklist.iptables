@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-19T06:18:52+00:00
-# Entries: 194
+# Generated: 2026-08-19T06:33:42+00:00
+# Entries: 195
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -128,6 +128,7 @@
 -A INPUT -s 68.221.69.72 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 68.221.73.131 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 68.221.130.146 -j DROP  # Spain Microsoft Corporation
+-A INPUT -s 72.146.2.52 -j DROP  # Italy BellSouth.net Inc.
 -A INPUT -s 72.146.20.230 -j DROP  # Italy BellSouth.net Inc.
 -A INPUT -s 72.146.33.199 -j DROP  # Italy BellSouth.net Inc.
 -A INPUT -s 74.248.24.145 -j DROP  # Poland Microsoft Corporation
