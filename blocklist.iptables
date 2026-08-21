@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-21T22:26:13+00:00
-# Entries: 216
+# Generated: 2026-08-21T22:28:57+00:00
+# Entries: 217
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -217,6 +217,7 @@
 -A INPUT -s 202.166.198.121 -j DROP  # Nepal WorldLink Communications
 -A INPUT -s 210.211.122.97 -j DROP  # Vietnam VTDC
 -A INPUT -s 213.209.159.154 -j DROP  # Germany Feo Prest SRL
+-A INPUT -s 213.209.159.175 -j DROP  # Germany Feo Prest SRL
 -A INPUT -s 216.126.239.78 -j DROP  # United States RouterHosting LLC
 -A INPUT -s 223.85.251.61 -j DROP  # China China Mobile communications corporation
 COMMIT
