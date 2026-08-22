@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-08-22T06:55:45+00:00",
-  "total_ips": 222,
-  "events": 256,
+  "generated_at": "2026-08-22T07:01:14+00:00",
+  "total_ips": 223,
+  "events": 257,
   "nodes": 3,
   "node_ids": [
     "ai-agent-baseball",
     "ai-agent-do-nyc",
     "ai-agent-stockweb"
   ],
-  "blocklist_count": 222,
+  "blocklist_count": 223,
   "pending_count": 0,
   "by_severity": {
     "critical": 0,
-    "high": 222,
+    "high": 223,
     "medium": 0,
     "low": 0
   },
@@ -35,7 +35,7 @@
     ],
     [
       "Canada",
-      13
+      14
     ],
     [
       "Spain",
@@ -61,7 +61,7 @@
   "top_rules": [
     [
       "nginx-php-scanner",
-      222
+      223
     ]
   ]
 }
