@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-08-22T04:45:29+00:00",
-  "total_ips": 221,
-  "events": 255,
+  "generated_at": "2026-08-22T05:00:58+00:00",
+  "total_ips": 222,
+  "events": 256,
   "nodes": 3,
   "node_ids": [
     "ai-agent-baseball",
     "ai-agent-do-nyc",
     "ai-agent-stockweb"
   ],
-  "blocklist_count": 221,
+  "blocklist_count": 222,
   "pending_count": 0,
   "by_severity": {
     "critical": 0,
-    "high": 221,
+    "high": 222,
     "medium": 0,
     "low": 0
   },
   "top_countries": [
     [
       "United States",
-      57
+      58
     ],
     [
       "Germany",
@@ -61,7 +61,7 @@
   "top_rules": [
     [
       "nginx-php-scanner",
-      221
+      222
     ]
   ]
 }
