@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-23T21:01:35+00:00
-# Entries: 235
+# Generated: 2026-08-23T21:19:32+00:00
+# Entries: 236
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -137,6 +137,7 @@
 -A INPUT -s 43.155.172.154 -j DROP  # South Korea Shenzhen Tencent Computer Systems Company Limited
 -A INPUT -s 43.156.109.74 -j DROP  # Singapore Shenzhen Tencent Computer Systems Company Limited
 -A INPUT -s 43.167.166.10 -j DROP  # Japan Shenzhen Tencent Computer Systems Company Limited
+-A INPUT -s 45.148.10.13 -j DROP  # The Netherlands Techoff SRV Limited
 -A INPUT -s 51.103.131.31 -j DROP  # Switzerland Microsoft
 -A INPUT -s 51.103.152.96 -j DROP  # Switzerland Microsoft
 -A INPUT -s 51.107.190.246 -j DROP  # Sweden Microsoft
