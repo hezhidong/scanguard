@@ -1,5 +1,5 @@
 # ScanGuard community blocklist
-# Generated: 2026-08-23T04:19:23+00:00
+# Generated: 2026-08-23T04:56:35+00:00
 # Min severity: high
 # Entries: 229
 # Source: https://github.com/hezhidong/scanguard
