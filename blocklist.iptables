@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-23T16:37:54+00:00
-# Entries: 233
+# Generated: 2026-08-23T16:48:16+00:00
+# Entries: 234
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -127,6 +127,7 @@
 -A INPUT -s 34.140.61.9 -j DROP  # Belgium Google LLC
 -A INPUT -s 35.180.166.128 -j DROP  # France Amazon Technologies Inc.
 -A INPUT -s 35.195.56.244 -j DROP  # Belgium Google LLC
+-A INPUT -s 35.204.220.189 -j DROP  # Netherlands Google LLC
 -A INPUT -s 35.228.195.197 -j DROP  # Finland Google LLC
 -A INPUT -s 35.241.159.95 -j DROP  # Belgium Google LLC
 -A INPUT -s 40.74.65.169 -j DROP  # Japan Microsoft Corporation
