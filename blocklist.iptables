@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-25T17:43:49+00:00
-# Entries: 253
+# Generated: 2026-08-25T18:08:54+00:00
+# Entries: 254
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -155,6 +155,7 @@
 -A INPUT -s 51.120.76.82 -j DROP  # Norway Microsoft
 -A INPUT -s 51.120.79.193 -j DROP  # Norway Microsoft
 -A INPUT -s 52.23.168.12 -j DROP  # United States Amazon.com, Inc.
+-A INPUT -s 52.139.44.162 -j DROP  # Canada Microsoft Corporation
 -A INPUT -s 52.141.19.25 -j DROP  # South Korea Microsoft Corporation
 -A INPUT -s 52.165.196.84 -j DROP  # United States Microsoft Corporation
 -A INPUT -s 52.173.121.69 -j DROP  # United States Microsoft Corporation
