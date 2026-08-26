@@ -1,5 +1,5 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-26T16:55:44+00:00
+# Generated: 2026-08-26T18:43:55+00:00
 # Entries: 261
 
 *filter
