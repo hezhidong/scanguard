@@ -1,7 +1,7 @@
 # ScanGuard community blocklist
-# Generated: 2026-08-26T07:13:56+00:00
+# Generated: 2026-08-26T07:39:24+00:00
 # Min severity: high
-# Entries: 258
+# Entries: 259
 # Source: https://github.com/hezhidong/scanguard
 
 2.27.11.30
@@ -11,6 +11,7 @@
 4.184.238.149
 4.204.200.136
 4.204.200.143
+4.205.62.107
 4.223.71.149
 4.223.73.90
 4.223.140.16
