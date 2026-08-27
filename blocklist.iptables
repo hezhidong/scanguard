@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-27T14:55:49+00:00
-# Entries: 267
+# Generated: 2026-08-27T16:57:17+00:00
+# Entries: 268
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -191,6 +191,7 @@
 -A INPUT -s 79.72.3.119 -j DROP  # Saudi Arabia Oracle Corporation
 -A INPUT -s 80.94.95.211 -j DROP  # Hungary SS-Net
 -A INPUT -s 81.226.129.67 -j DROP  # Sweden Telia Company AB
+-A INPUT -s 82.156.162.176 -j DROP  # China Shenzhen Tencent Computer Systems Company Limited
 -A INPUT -s 87.192.253.110 -j DROP  # Uzbekistan "Uzbektelekom" Joint Stock Company
 -A INPUT -s 89.126.211.166 -j DROP  # Uzbekistan "Uzbektelekom" Joint Stock Company
 -A INPUT -s 101.36.104.242 -j DROP  # Japan UCLOUD INFORMATION TECHNOLOGY (HK) LIMITED
