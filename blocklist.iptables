@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-28T03:31:10+00:00
-# Entries: 270
+# Generated: 2026-08-28T04:31:36+00:00
+# Entries: 271
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -273,4 +273,5 @@
 -A INPUT -s 216.126.239.78 -j DROP  # United States RouterHosting LLC
 -A INPUT -s 217.160.171.212 -j DROP  # Germany IONOS SE
 -A INPUT -s 223.85.251.61 -j DROP  # China China Mobile communications corporation
+-A INPUT -s 223.123.92.77 -j DROP  # Pakistan CMPak Limited
 COMMIT
