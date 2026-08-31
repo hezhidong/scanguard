@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-08-31T15:25:57+00:00
-# Entries: 297
+# Generated: 2026-08-31T17:14:30+00:00
+# Entries: 298
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -245,6 +245,7 @@
 -A INPUT -s 139.162.119.146 -j DROP  # Japan Akamai Technologies, Inc.
 -A INPUT -s 139.162.124.188 -j DROP  # Japan Akamai Technologies, Inc.
 -A INPUT -s 151.243.18.111 -j DROP  # United States Dedik Services Limited
+-A INPUT -s 152.89.168.28 -j DROP  # Italy Cinzia Tocci trading as Lumanex Srl
 -A INPUT -s 154.29.72.122 -j DROP  # United States Tier.Net Technologies LLC
 -A INPUT -s 154.29.72.168 -j DROP  # United States Tier.Net Technologies LLC
 -A INPUT -s 158.23.147.79 -j DROP  # Mexico Microsoft Corporation
