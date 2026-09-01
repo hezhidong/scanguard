@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-09-01T00:25:35+00:00
-# Entries: 300
+# Generated: 2026-09-01T03:50:01+00:00
+# Entries: 301
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -232,6 +232,7 @@
 -A INPUT -s 121.40.20.65 -j DROP  # China Hangzhou Alibaba Advertising Co., Ltd.
 -A INPUT -s 129.121.128.70 -j DROP  # Singapore Oracle Corporation
 -A INPUT -s 130.12.180.77 -j DROP  # The Netherlands Netiface LLC
+-A INPUT -s 130.211.101.254 -j DROP  # Belgium Google LLC
 -A INPUT -s 135.225.75.187 -j DROP  # Sweden Microsoft Corporation
 -A INPUT -s 136.66.149.90 -j DROP  # United States Google LLC
 -A INPUT -s 136.70.128.68 -j DROP  # United States Google LLC
