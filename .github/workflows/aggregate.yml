@@ -36,7 +36,27 @@ jobs:
                   stats.json threats.json index.html
           if git diff --cached --quiet; then
             echo "No changes to commit."
-          else
-            git commit -m "chore: rebuild blocklist + stats [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore: rebuild blocklist + stats [skip ci]"
+          # Concurrent runs (schedule + per-report push) may race on push:
+          # discard the stale rebuild, regenerate against latest master, retry.
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed successfully on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Push rejected (attempt ${attempt}); regenerating against latest origin/master..."
+            git fetch origin master
+            git reset --hard origin/master
+            python3 scripts/aggregate.py
+            git add blocklist.txt blocklist.iptables blocklist.nftables \
+                    stats.json threats.json index.html
+            if git diff --cached --quiet; then
+              echo "Already up to date with origin/master."
+              exit 0
+            fi
+            git commit -m "chore: rebuild blocklist + stats [skip ci]"
+          done
+          echo "Push failed after 3 attempts."
+          exit 1
