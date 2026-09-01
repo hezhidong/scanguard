@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-09-01T03:50:01+00:00
-# Entries: 301
+# Generated: 2026-09-01T05:20:51+00:00
+# Entries: 302
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -252,6 +252,7 @@
 -A INPUT -s 154.29.72.168 -j DROP  # United States Tier.Net Technologies LLC
 -A INPUT -s 158.23.18.78 -j DROP  # Mexico Microsoft Corporation
 -A INPUT -s 158.23.147.79 -j DROP  # Mexico Microsoft Corporation
+-A INPUT -s 158.94.209.135 -j DROP  # The Netherlands Omegatech LTD
 -A INPUT -s 158.158.32.226 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 158.158.35.55 -j DROP  # Spain Microsoft Corporation
 -A INPUT -s 158.158.41.79 -j DROP  # Spain Microsoft Corporation
