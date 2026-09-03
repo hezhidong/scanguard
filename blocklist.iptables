@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-09-03T02:41:48+00:00
-# Entries: 308
+# Generated: 2026-09-03T03:12:07+00:00
+# Entries: 309
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -223,6 +223,7 @@
 -A INPUT -s 101.36.104.242 -j DROP  # Japan UCLOUD INFORMATION TECHNOLOGY (HK) LIMITED
 -A INPUT -s 101.47.8.187 -j DROP  # Singapore Byteplus Pte. Ltd.
 -A INPUT -s 101.47.50.15 -j DROP  # Singapore Byteplus Pte. Ltd.
+-A INPUT -s 103.46.186.85 -j DROP  # Indonesia PT Air Lintas Komunikasi
 -A INPUT -s 103.63.101.24 -j DROP  # Indonesia PT Berkah Maju Interasional
 -A INPUT -s 103.159.51.70 -j DROP  # Vietnam NHANHOASOLUTIONS
 -A INPUT -s 103.205.107.170 -j DROP  # Vietnam Galaxy Play Joint Stock Company
