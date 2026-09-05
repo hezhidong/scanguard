@@ -1,6 +1,6 @@
 # ScanGuard blocklist (iptables-restore format)
-# Generated: 2026-09-05T05:48:35+00:00
-# Entries: 320
+# Generated: 2026-09-05T07:43:57+00:00
+# Entries: 321
 
 *filter
 -A INPUT -s 2.27.11.30 -j DROP  # Finland U1 DIGITAL SERVICES LTD
@@ -237,6 +237,7 @@
 -A INPUT -s 104.234.138.60 -j DROP  #
 -A INPUT -s 106.15.236.209 -j DROP  # China Hangzhou Alibaba Advertising Co
 -A INPUT -s 107.150.97.10 -j DROP  # United States Zenlayer Inc
+-A INPUT -s 107.173.160.158 -j DROP  # United States HostPapa
 -A INPUT -s 107.175.227.45 -j DROP  # United States HostPapa
 -A INPUT -s 110.35.80.116 -j DROP  # Indonesia Network Access Point Nap Info Lintas Nusa
 -A INPUT -s 116.62.163.56 -j DROP  # China CNC Group CHINA169 Fujian Province Network
