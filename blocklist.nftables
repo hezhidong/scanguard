@@ -1,5 +1,5 @@
 # ScanGuard blocklist (nftables format)
-# Generated: 2026-10-20T17:18:04+00:00
+# Generated: 2026-10-20T20:41:15+00:00
 # Entries: 323
 table inet scanguard {
   set blocklist {
